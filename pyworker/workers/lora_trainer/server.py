@@ -1,3 +1,11 @@
+import os
+import sys
+# Vast.aiサーバーレス環境以外（ローカルテストなど）で実行する場合、
+# REPORT_ADDR環境変数が存在しないため、ダミーの値を設定する。
+if "REPORT_ADDR" not in os.environ:
+    print("WARNING: 'REPORT_ADDR' not found in environment variables. Setting a dummy value.", file=sys.stderr)
+    os.environ["REPORT_ADDR"] = "http://127.0.0.1:8080"
+
 import asyncio
 import dataclasses
 import glob
