@@ -7,9 +7,10 @@ if "REPORT_ADDR" not in os.environ:
     os.environ["REPORT_ADDR"] = "http://127.0.0.1:8080"
 
 # レポートに基づき、WORKER_PORTが未設定の場合のフォールバックを追加
+# Jupyterとのポート衝突を避けるため、デフォルトを8000に変更
 if "WORKER_PORT" not in os.environ:
-    print("WARNING: 'WORKER_PORT' not found. Defaulting to 8080 based on report analysis.", file=sys.stderr)
-    os.environ["WORKER_PORT"] = "8080"
+    print("WARNING: 'WORKER_PORT' not found. Defaulting to 8000 to avoid conflict with Jupyter.", file=sys.stderr)
+    os.environ["WORKER_PORT"] = "8000"
 
 import asyncio
 import dataclasses
