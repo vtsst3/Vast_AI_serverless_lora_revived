@@ -16,7 +16,7 @@ apt-get update
 apt-get install -y git
 
 echo "Cloning repositories..."
-git clone https://github.com/vtsst3/Vast_AI_serverless_lora.git /workspace/lora-worker
+git clone https://github.com/vtsst3/Vast_AI_serverless_lora_revived.git /workspace/lora-worker
 git clone https://github.com/vast-ai/pyworker.git /workspace/vast_pyworker_lib
 
 # 依存関係のインストール
