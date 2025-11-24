@@ -6,6 +6,11 @@ if "REPORT_ADDR" not in os.environ:
     print("WARNING: 'REPORT_ADDR' not found in environment variables. Setting a dummy value.", file=sys.stderr)
     os.environ["REPORT_ADDR"] = "http://127.0.0.1:8080"
 
+# レポートに基づき、WORKER_PORTが未設定の場合のフォールバックを追加
+if "WORKER_PORT" not in os.environ:
+    print("WARNING: 'WORKER_PORT' not found. Defaulting to 8080 based on report analysis.", file=sys.stderr)
+    os.environ["WORKER_PORT"] = "8080"
+
 import asyncio
 import dataclasses
 import glob
