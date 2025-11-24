@@ -1,0 +1,2675 @@
+# Serverless Overview
+
+> Learn how to use Vast.ai's Serverless system to automate the provisioning of GPU workers to match the dynamic computational needs of your workloads.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Vast.ai Serverless Overview",
+  "description": "Introduction to Vast.ai's Serverless system for automating GPU worker provisioning with key features including dynamic scaling, global GPU fleet, fast cold-start times, and custom worker types.",
+  "author": {
+    "@type": "Organization",
+    "name": "Vast.ai"
+  },
+  "articleSection": "Serverless Documentation",
+  "keywords": ["serverless", "GPU", "dynamic scaling", "AI inference", "vast.ai", "autoscaling"]
+})
+}}
+/>
+
+Use Vast.ai's Serverless system to automate the provisioning of GPU workers to match the dynamic computational needs of your workloads. This system ensures efficient and cost-effective scaling for AI inference and other GPU computing tasks.
+
+## Key Features
+
+* **Dynamic Scaling**: Automatically scale your AI inference up or down based on customizable performance metrics.
+* **Global GPU Fleet**: Leverage Vast’s global fleet of powerful, affordable GPUs for your computational needs.
+* **Fast Cold-Start Times**: Minimize cold-start times with a reserve pool of workers that can spin up in seconds.
+* **Metrics and Debugging**: Access ample metrics and debugging tools for your serverless usage, including logs and Jupyter/SSH access.
+* **Performance Exploration**: Perform in-depth performance exploration to optimize based on performance and price metrics.
+* **Custom Worker Types**: Define custom worker types through CLI search filters and create commands, supporting multiple worker types per endpoint.
+
+
+# Architecture
+
+> Understand the architecture of Vast.ai Serverless, including the Serverless System, GPU Instances, and User (Client Application). Learn how the system works, how to use the routing process, and how to create Worker Groups.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Vast.ai Serverless Architecture",
+  "description": "Understanding the architecture of Vast.ai Serverless including the serverless system, GPU instances, endpoints and worker groups, system architecture, and the two-step routing process.",
+  "author": {
+    "@type": "Organization",
+    "name": "Vast.ai"
+  },
+  "articleSection": "Serverless Documentation",
+  "keywords": ["serverless", "architecture", "endpoints", "worker groups", "routing", "GPU instances", "vast.ai", "PyWorker"]
+})
+}}
+/>
+
+The Vast.ai Serverless solution manages groups of GPU instances to efficiently serve applications, automatically scaling up or down based on load metrics defined by the Vast PyWorker. It streamlines instance management, performance measurement, and error handling.
+
+## Endpoints and Worker Groups
+
+The Serverless system needs to be configured at two levels:
+
+* **Endpoints:** The highest level clustering of instances for the Serverless system, consisting of a named endpoint string, a collection of Worker groups, and hyperparameters.
+* **Worker Groups**: A lower level organization that lives within an Endpoint. It consists of a [template](/documentation/instances/templates) (with extra filters for search), a set of GPU instances (workers) created from that template, and hyperparameters. Multiple Worker Groups can exist within an Endpoint.
+
+Having two-level scaling provides several benefits:
+
+1. **Comparing Performance Metrics Across Hardware**: Suppose you want to run the same templates on different hardware to compare performance metrics. You can create several groups, each configured to run on specific hardware. By leaving this setup running for a period of time, you can review the metrics and select
+   the most suitable hardware for your users' needs.
+2. **Smooth Rollout of a New Model**: If you're using TGI to handle LLM inference with LLama3 and want to transition to LLama4, you can do so gradually. For a smooth rollout where only 10% of user requests are handled by LLama4, you can create a new Worker Group under the existing Endpoint. Let it run for a while,
+   review the metrics, and then fully switch to LLama4 when ready.
+3. **Handling Diverse Workloads with Multiple Models**: You can create an Endpoint to manage LLM inference using TGI. Within this group, you can set up multiple
+   Worker Groups, each using a different LLM to serve requests. This approach is beneficial when you need a few resource-intensive models to handle most requests, while smaller, more cost-effective models manage overflow during workload spikes.
+
+It's important to note that having multiple Worker Groups within a single Endpoint is not always necessary. For most users, a single Worker Group within an Endpoint provides an optimal setup.
+
+You can create Worker Groups using our [Serverless-Compatible Templates](/documentation/serverless/text-generation-inference-tgi), which are customized versions of popular templates on Vast, designed to be used on the serverless system.
+
+## System Architecture
+
+The system architecture for an application using Vast.ai Serverless includes the following components:
+
+* **Serverless System**&#x20;
+* **GPU Instances**&#x20;
+* **User (Client Application)**
+
+<Frame caption="Serverless Architecture">
+    <img src="https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-architecture.webp?fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=10a86ac6eb9418b9083243255796e4d7" alt="Serverless Architecture" data-og-width="1205" width="1205" data-og-height="989" height="989" data-path="images/serverless-architecture.webp" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-architecture.webp?w=280&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=a24a287ab03c3ab46e22c540befcd430 280w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-architecture.webp?w=560&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=a38d6bde804407e9a88e49beabd353ec 560w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-architecture.webp?w=840&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=52174d287cef7c202fbf9ea506ee97bb 840w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-architecture.webp?w=1100&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=6365bb774ed072e1987c7f4ffbf8e2c0 1100w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-architecture.webp?w=1650&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=175da80c04658fe02aba39c4da20dbd5 1650w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-architecture.webp?w=2500&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=7b16f69ea58b0c3d3f27a103932355ac 2500w" />
+</Frame>
+
+### Example Workflow&#x20;
+
+1. A client initiates a request to the Serverless system by invoking the `https://run.vast.ai/route/` endpoint.
+2. The Serverless system returns a suitable worker address. In the example above, this would be `ip_address_2` since that GPU instance is 'Ready'.
+3. The client calls the GPU instance's specific API endpoint, passing the authentication info returned by `/route/` along with payload parameters.
+4. The PyWorker on the GPU instance receives the payload and forwards it to the ML model. After model inference, the PyWorker receives the results.
+5. The PyWorker sends the model results back to the client.
+6. Independently and concurrently, each PyWorker in the Endpoint sends its operational metrics to the Serverless system, which it uses to make scaling decisions.
+
+### Two-Step Routing Process
+
+This 2-step routing process is used for security and flexibility. By having the client send payloads directly to the GPU instances, your payload information is never stored on Vast servers.
+
+The `/route/` endpoint signs its messages with a public key available at `https://run.vast.ai/pubkey/`, allowing the GPU worker to validate requests and prevent unauthorized usage.
+
+# Getting Started With Serverless
+
+> Learn how to get started with Vast.ai Serverless. Understand the prerequisites, setup process, and how to use the serverless engine.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Get Started with Vast.ai Serverless",
+  "description": "A comprehensive tutorial on setting up a vLLM + Qwen3-8B Serverless Engine on Vast.ai, from configuring environment variables to load testing your endpoint.",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Configure User Environment Variables",
+      "text": "Navigate to the user account settings page at cloud.vast.ai/account and drop down the 'Environment Variables' tab. Add 'HF_TOKEN' in the Key field and your HuggingFace read-access token in the Value field. Click the '+' button and then 'Save Edits'."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Prepare a Template for Workers",
+      "text": "Navigate to the Templates Page at cloud.vast.ai/templates, select the Serverless filter, and click Edit on the 'vLLM + Qwen/Qwen3-8B (Serverless)' template. In the Environment Variables section, set MODEL_NAME to your desired model. Set the template to Private and click Save & Use. Copy the template hash for CLI usage."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Create The Endpoint",
+      "text": "Navigate to the Serverless Page at cloud.vast.ai/serverless and click Create Endpoint. Configure parameters: endpoint_name (the name), cold_mult (multiplier for future load prediction, default 2 for LLMs), min_load (baseline tokens/second, default 100 for LLMs), target_util (percentage of compute resources in-use, default 0.9), max_workers (maximum number of workers), and cold_workers (minimum workers kept ready). Click Create."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Create a Workergroup",
+      "text": "From the Serverless page, click '+ Workergroup' under the Endpoint. Your custom vLLM template should be selected. Enter values: Cold Multiplier = 3, Minimum Load = 1, Target Utilization = 0.9, Workergroup Name = 'Workergroup', and Select Endpoint = 'vLLM-Qwen3-8B'. Click Create. The serverless engine will automatically find offers and create instances."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Wait for First Ready Worker",
+      "text": "Monitor the workers in the Serverless section of the Vast.ai console. Workers will download the Qwen3-8B model and initialize. When a worker finishes benchmarking (Curr. Performance is non-zero) and status becomes 'Ready', the serverless engine is ready to receive requests."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Test the Serverless Engine with Client",
+      "text": "Clone the PyWorker repository from GitHub. Find your Serverless API key using 'vastai show endpoints' command. Optionally install the TLS certificate. Run the client with: 'python3 -m workers.openai.client -k \"$YOUR_USER_API_KEY\" -e \"vLLM-Qwen3-8B\" --model \"Qwen/Qwen3-8B\" --completion' to test completions."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Monitor and Load Test",
+      "text": "Fetch Endpoint logs using cURL to https://run.vast.ai/get_endpoint_logs/ or Workergroup logs to https://run.vast.ai/get_workergroup_logs/. Run load testing with: 'python3 -m workers.openai.test_load -n 100 -rps 1 -k \"$YOUR_USER_API_KEY\" -e \"vLLM-Qwen3-8B\" --model \"Qwen/Qwen3-8B\"' to test with 100 requests at 1 request per second."
+    }
+  ]
+})
+}}
+/>
+
+<Warning>
+  For users not familiar with Vast.ai's Serverless engine, we recommend starting with the [Serverless Architecture documentation](/documentation/serverless/architecture). It will be helpful in understanding how the system operates, processes requests, and manages resources.
+</Warning>
+
+# Overview & Prerequisites
+
+Vast.ai provides pre-made serverless templates ([vLLM](/documentation/serverless/vllm), [ComfyUI](/documentation/serverless/comfy-ui)) for popular use cases, and can be used with minimal setup effort. In this guide, we will setup a serverless engine to handle inference requests to a model using vLLM, namely Qwen3-8B , using the pre-made Vast.ai vLLM serverless template. This prebuilt template bundles vLLM with scaling logic so you don’t have to write custom orchestration code. By the end of this guide, you will be able to host the Qwen3-8B model with dynamic scaling to meet your demand.
+
+<Note>
+  This guide assumes knowledge of the Vast CLI. An introduction for it can be found [here](/cli/get-started).
+</Note>
+
+Before we start, there are a few things you will need:
+
+1. A Vast.ai account with credits
+2. A Vast.ai [API Key](/documentation/reference/keys)
+3. A HuggingFace account with a [read-access API token](https://huggingface.co/docs/hub/en/security-tokens)
+
+# Setting Up a vLLM + **Qwen3-8B**  Serverless Engine
+
+<Steps>
+  <Step title="Configure User Environment Variables">
+    Navigate to the user account settings page [here](https://cloud.vast.ai/account/) and drop down the "Environment Variables" tab. In the Key field, add "HF\_TOKEN", and in the Value field add the HuggingFace read-access token. Click the "+" button to the right of the fields, then click "Save Edits".
+
+        <img src="https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless.webp?fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=209303d04548e71453da6d41ef9ee401" alt="" data-og-width="1034" width="1034" data-og-height="1129" height="1129" data-path="images/getting-started-serverless.webp" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless.webp?w=280&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=16c6f7e8d15a2743804583e73f04e5fe 280w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless.webp?w=560&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=e74dd18906758c7094c5893259fd4476 560w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless.webp?w=840&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=79983116bfcb2b607f83f246808eb4c9 840w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless.webp?w=1100&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=a0b66964ca57b4318eb55f8fc0c7ab16 1100w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless.webp?w=1650&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=da434d9c9b107ac8b5cd298b8943d786 1650w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless.webp?w=2500&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=5df9bf2ee7b5e0dc6c171c2aee35daef 2500w" />
+  </Step>
+
+  <Step title="Prepare a Template for our Workers">
+    Templates encapsulate all the information required to run an application on a GPU worker, including machine parameters, docker image, and environment variables.
+
+    Navigate to the [Templates Page](https://cloud.vast.ai/templates/), select the Serverless filter, and click the Edit button on the 'vLLM + Qwen/Qwen3-8B (Serverless)' template.&#x20;
+
+    In the Environment Variables section, "Qwen/Qwen3-8B" is the default value for `MODEL_NAME`, but can be changed to any compatible vLLM model on HuggingFace. Set this template to Private and click Save & Use.&#x20;
+
+        <img src="https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-2.webp?fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=f72307bd1ddf07074a3d2a9737cec7c4" alt="" data-og-width="1006" width="1006" data-og-height="1212" height="1212" data-path="images/getting-started-serverless-2.webp" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-2.webp?w=280&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=183ca84f60d0bfc5056ae7a10f8c8068 280w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-2.webp?w=560&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=652dd6da562a35c091a6a051c6587ef1 560w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-2.webp?w=840&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=f12b95f233105237c9499c1e8492b3ba 840w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-2.webp?w=1100&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=d57d0f3f7cdd8a53aee36191215990ca 1100w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-2.webp?w=1650&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=73921a4a5ebdd1659f5ead8b6e744c4c 1650w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-2.webp?w=2500&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=18ea4fcab93da29d353a8be78c9a2f4f 2500w" />
+
+    <Check>
+      The template will now work without any further edits, but can be customized to suit specific needs. Vast recommends keeping the template private to avoid making any private information publically known.
+    </Check>
+
+    We should now see the Vast.ai search page with the template selected. For those intending to use the Vast CLI, click More Options on the template and select 'Copy template hash'. We will use this in step 3.
+
+        <img src="https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-3.webp?fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=2bfc3b57a3d9f16e7d7d4c05cd219dd4" alt="" data-og-width="1280" width="1280" data-og-height="1200" height="1200" data-path="images/getting-started-serverless-3.webp" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-3.webp?w=280&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=a54ea7589253eb44c27b8e8fbf7c0a47 280w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-3.webp?w=560&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=51875a5f6f63e29b2405fe797c3c01bd 560w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-3.webp?w=840&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=7f9aabb7f917fa0e37baf96af6ac9d3f 840w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-3.webp?w=1100&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=18a1d0af9a1f73d7ddee58001389911d 1100w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-3.webp?w=1650&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=227e5a6900ff9de39dfd6b8320eebf85 1650w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-3.webp?w=2500&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=b0130f33637b686d1710d6a4f629cb60 2500w" />
+  </Step>
+
+  <Step title="Create The Endpoint">
+    Next we will create an Endpoint that any user can query for generation. This can be done through the Web UI or the Vast CLI. Here, we'll create an endpoint named 'vLLM-Qwen3-8B '.
+
+    <Tabs>
+      <Tab title="Web UI">
+        Navigate to the [Serverless Page](https://cloud.vast.ai/serverless/) and click Create Endpoint. A screen to create a new Endpoint will pop up, with default values already assigned. Our Endpoint will work with these default values, but you can change them to suit your needs.
+
+                <img src="https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-4.webp?fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=528f0ada7825b3229c5112c9cefd5004" alt="" data-og-width="800" width="800" data-og-height="1210" height="1210" data-path="images/getting-started-serverless-4.webp" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-4.webp?w=280&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=b8572eb2f09dfde4f052cf70c5450e10 280w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-4.webp?w=560&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=3e14554e72395505d986d8b2c28c5f22 560w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-4.webp?w=840&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=a49f2f0e743df3a5028cad4514b22ad7 840w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-4.webp?w=1100&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=9c55942d734f2ac36f2fefa2d73576d7 1100w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-4.webp?w=1650&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=d8712ca7bea74520634a6bd8355faf40 1650w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-4.webp?w=2500&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=258589c23450e78dd507e8ccdb14f190 2500w" />
+
+        * `endpoint_name`: The name of the Endpoint.
+        * `cold_mult`: The multiple of the current load that is used to predict the future load. For example, if we currently have 10 users, but expect there to be 20 in the near future, we can set cold\_mult = 2.&#x20;
+          * For LLMs, a good default is 2.
+        * `min_load`: The baseline amount of load (tokens / second for LLMs) we want the Endpoint to be able to handle.&#x20;
+          * For LLMs, a good default is 100.0
+        * `target_util`: The percentage of the Endpoint compute resources that we want to be in-use at any given time. A lower value allows for more slack, which means the Endpoint will be less likely to be overwhelmed if there is a sudden spike in usage.&#x20;
+          * For LLMs, a good default is 0.9
+        * `max_workers`: The maximum number of workers the Endpoint can have at any one time.
+        * `cold_workers`: The minimum number of workers kept "cold" (meaning stopped but fully loaded with the image) when the Endpoint has no load. Having cold workers available allows the Serverless system to seamlessly spin up more workers as when load increases.
+
+        Click Create, where you will be taken back to the Serverless page. After a few moments, the Endpoint will show up with the name 'vLLM-Qwen3-8B'.
+      </Tab>
+
+      <Tab title="Vast CLI">
+        If your machine is properly configured for the Vast CLI, you can run the following command:
+
+        ```cli CLI Command theme={null}
+        vastai create endpoint --endpoint_name "vLLM-Qwen3-8B" --cold_mult 1.0 --min_load 100 --target_util 0.9 --max_workers 20 --cold_workers 5
+        ```
+
+        * `endpoint_name`: The name you use to identify your Endpoint.
+        * `cold_mult`: The multiple of your current load that is used to predict your future load. For example if you currently have 10 users, but expect there to be 20 in the near future, you can set cold\_mult = 2.0.
+          * For LLMs, a good default is 2.0
+        * `min_load`: This is the baseline amount of load (tokens / second for LLMs) you want your Endpoint to be able to handle.&#x20;
+          * For LLMs, a good default is 100.0
+        * `target_util`: The percentage of your Endpoint compute resources that you want to be in-use at any given time. A lower value allows for more slack, which means your Endpoint will be less likely to be overwhelmed if there is a sudden spike in usage.&#x20;
+          * For LLMs, a good default is 0.9
+        * `max_workers`: The maximum number of workers your Endpoint can have at any one time.
+        * `cold_workers`: The minimum number of workers you want to keep "cold" (meaning stopped and fully loaded) when your Endpoint has no load.
+
+        A successful creation of the endpoint should return a `'success': True` as the output in the terminal.
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Create a Workergroup">
+    Now that we have our Endpoint, we can create a Workergroup with the template we prepared in step 1.&#x20;
+
+    <Tabs>
+      <Tab title="Web UI">
+        From the Serverless page, click '+ Workergroup' under the Endpoint. Our custom vLLM (Serverless) template should already be selected. To confirm, click the Edit button and check that the `MODEL_NAME`environment variable is filled in.
+
+        For our simple setup, we can enter the following values:
+
+        * Workergroup Name = 'Workergroup'
+        * Select Endpoint = 'vLLM-Qwen3-8B'
+
+        A complete page should look like the following:
+
+                <img src="https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-5.webp?fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=1b564ea5d330e6b5eb5acecea847c58a" alt="" data-og-width="943" width="943" data-og-height="1143" height="1143" data-path="images/getting-started-serverless-5.webp" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-5.webp?w=280&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=32561ebad0e1f5ba649a354ddf0d033d 280w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-5.webp?w=560&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=0fe9772d15f535fcb27e11b5e6e284b8 560w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-5.webp?w=840&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=d39f804d922ba71860818d383e26c281 840w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-5.webp?w=1100&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=7cc204bde8b414dd2e66e89e8a8cc538 1100w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-5.webp?w=1650&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=626fb138075cb6cf0a95c92dd82ccb1f 1650w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-5.webp?w=2500&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=87ab443f0e47edaf28683d9b9bcfee82 2500w" />
+
+        After entering the values, click Create, where you will be taken back to the Serverless page. After a moment, the Workergroup will be created under the 'vLLM-Qwen3-8B' Endpoint.
+      </Tab>
+
+      <Tab title="Vast CLI">
+        Run the following command to create your Workergroup:
+
+        ```sh CLI Command theme={null}
+        vastai create workergroup --endpoint_name "vLLM-DeepSeek" --template_hash "$TEMPLATE_HASH" --gpu_ram 24
+        ```
+
+        `endpoint_name`: The name of the Endpoint.
+        `template_hash`: The hash code of our custom vLLM (Serverless) template.
+        `gpu_ram`: The amount of memory (in GB) that you expect your template to load onto the GPU (i.e. model weights).
+
+        <Warning>
+          You will need to replace "\$TEMPLATE\_HASH" with the template hash copied from step 1.
+        </Warning>
+      </Tab>
+    </Tabs>
+
+    Once the Workergroup is created, the serverless engine will automatically find offers and create instances. This may take \~10-60 seconds to find appropritate GPU workers.
+
+    <Tabs>
+      <Tab title="Web UI">
+        To see the instances the system creates, click the 'View detailed stats' button on the Workergroup. Five workers should startup, showing the 'Loading' status:
+
+                <img src="https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-6.webp?fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=7c1eb6313d15408a96d09484b9e6c584" alt="" data-og-width="1280" width="1280" data-og-height="206" height="206" data-path="images/getting-started-serverless-6.webp" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-6.webp?w=280&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=e2dc902b671c95cda0356e6088792945 280w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-6.webp?w=560&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=e2a2dd3ec1c1300ae3258529d0508aa6 560w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-6.webp?w=840&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=2c8d479d5f7272c5e816d9bafd1ce734 840w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-6.webp?w=1100&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=4651be38d4f4e5dc192b3b490296c168 1100w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-6.webp?w=1650&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=7e5a8eb2c1bbd80e92908eb237555183 1650w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-6.webp?w=2500&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=c833ba2eedb8f49aa1c20c79bc99251a 2500w" />
+      </Tab>
+
+      <Tab title="Vast CLI">
+        To see the instances the autoscaler creates, run the following command:
+
+        ```sh CLI Command theme={null}
+        vastai show instances
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Getting The First Ready Worker">
+    Now that we have created both the Endpoint and the Workergroup, all that is left to do is await for the first "Ready" worker. We can see the status of the workers in the Serverless section of the Vast.ai console. The workers will automatically download the Qwen3-8B model defined in the template, but it will take time to fully initialize. The worker is loaded and benchmarked when the `Curr. Performance` value is non-zero.
+
+    When a worker has finished benchmarking, the worker's status in the Workergroup will become Ready. We are now able to get a successful /route/ call to the Workergroup and send it requests!
+
+        <img src="https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-7.webp?fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=da0c0b388c21903d377c3d3f84af8e51" alt="" data-og-width="800" width="800" data-og-height="1107" height="1107" data-path="images/getting-started-serverless-7.webp" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-7.webp?w=280&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=e88c5d594429aa42e0b716284c1a9748 280w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-7.webp?w=560&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=8d5bdad77b4e9ddcc1f142235bc7ac72 560w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-7.webp?w=840&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=f10bfac2ded8710c77f05bbf0b176a14 840w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-7.webp?w=1100&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=4dda0f6bfdb503571486f0088d6c357b 1100w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-7.webp?w=1650&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=699f0f2bd18922530e985fb3f1686768 1650w, https://mintcdn.com/vastai-80aa3a82/kXucPQ3Cl04LpCWx/images/getting-started-serverless-7.webp?w=2500&fit=max&auto=format&n=kXucPQ3Cl04LpCWx&q=85&s=72e4c11b8b7ba8264a5774f58dfcfcf6 2500w" />
+  </Step>
+</Steps>
+
+We have now successfully created a vLLM + Qwen3-8B Serverless Engine! It is ready to receive user requests and will automatically scale up or down to meet the request demand. In this next section, we will setup a client to test the serverless engine, and learn how to use the core serverless endpoints along the way.
+
+***
+
+# Using the Serverless Engine
+
+To make requests to your endpoint, first install the `vastai_sdk` from pip.
+
+```sh Bash theme={null}
+pip install vastai_sdk
+```
+
+Make sure you have configured the `VAST_API_KEY` environment variable with your Serverless API key.
+
+## API Keys
+
+Upon creation of a Serverless endpoint group, the group will obtain a special API key specifically for Serverless. This key is unique to an account, and will be used for all calls to the Serverless engine. This key is different from a standard Vast.ai API key and only works with Serverless endpoint groups. &#x20;
+
+### Where to find a Serverless API key:
+
+Use the Vast CLI to find a Serverless API key.
+
+```cli CLI Command theme={null}
+  vastai show endpoints
+```
+
+The `show endpoints` command will return a JSON blob like this:
+
+```javascript Javascript icon="js" theme={null}
+{
+  "api_key": "952laufhuefiu2he72yhewikhf28732873827uifdhfiuh2ifh72hs80a8s728c699s9",
+  "cold_mult": 2.0,
+  "cold_workers": 3,
+  "created_at": 1755115734.0841732,
+  "endpoint_name": "vLLM-Qwen3-8B",
+  "endpoint_state": "active",
+  "id": 1234,
+  "max_workers": 5,
+  "min_load": 10.0,
+  "target_util": 0.9,
+  "user_id": 123456
+ }
+```
+
+## Usage
+
+Create a Python script to send a request to your endpoint:
+
+```python icon="python" Python theme={null}
+from vastai import Serverless
+import asyncio
+
+async def main():
+    async with Serverless() as client:
+        endpoint = await client.get_endpoint(name="my-endpoint")
+
+        payload = {
+            "input" : {
+                "model": "Qwen/Qwen3-8B",
+                "prompt" : "Who are you?",
+                "max_tokens" : 100,
+                "temperature" : 0.7
+            }
+        }
+        
+        response = await endpoint.request("/v1/completions", payload)
+        print(response["response"]["choices"][0]["text"])
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+This is everything you need to start a vLLM + Qwen3-8B Serverless engine! There are other Vast pre-made [serverless templates](/documentation/templates/quickstart), like the ComfyUI Image Generation model, that can be setup in a similar fashion.&#x20;
+
+
+# Pricing
+
+> Learn how Vast.ai Serverless pricing works - GPU recruitment, endpoint suspension, and stopping.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Vast.ai Serverless Pricing",
+  "description": "Understanding Vast.ai Serverless pay-as-you-go pricing including GPU recruitment, endpoint suspension and stopping, and billing by instance state (Ready, Loading, Creating, Inactive).",
+  "author": {
+    "@type": "Organization",
+    "name": "Vast.ai"
+  },
+  "articleSection": "Serverless Documentation",
+  "keywords": ["pricing", "billing", "pay-as-you-go", "GPU costs", "serverless", "vast.ai", "endpoints"]
+})
+}}
+/>
+
+Vast.ai Serverless offers pay-as-you-go pricing for all workloads at the same rates as Vast.ai's non-Serverless GPU instances. Each instance accrues cost on a per second basis.
+This guide explains how pricing works.
+
+## GPU Recruitment
+
+As the Serverless engine takes requests, it will automatically scale its number of workers up or down depending on the incoming and forecasted demand. When scaling up,
+the engine searches over the Vast.ai marketplace for GPU instances that offer the best performance / price ratio. Once determined, the GPU instance(s) is recruited into
+the Serverless engine, and its cost (\$/hr) is added to the running sum of all GPU instances running on your Serverless engine.&#x20;
+
+As the request demand falls off, the engine will remove GPU instance(s) and your credit account immediatley stops being charged for those corresponding instance(s).
+
+Visit the [Billing Help](/documentation/reference/billing#ugwiY) page to see details on GPU instance costs.
+
+## Suspending an Endpoint
+
+When an Endpoint is **suspended**:
+
+* The Serverless Engine will no longer manage the GPU instances contained within the Endpoint.
+* GPU instances in this Endpoint will still be able to receive requests.&#x20;
+
+## Stopping an Endpoint
+
+**Stopping** an Endpoint will:
+
+* Cause the Serverless Engine to no longer manage the GPU instances contained within the Endpoint.
+* Put all existing GPU instances into the Inactive state.
+
+An **Inactive** GPU instance will:
+
+* Not receive any work.
+* Not charge GPU compute costs.
+* Charge the user's account for **storage** and **bandwidth**.&#x20;
+
+## Billing by Instance State
+
+The specific charges depend on the instance's state:
+
+| State    | GPU compute | Storage | Bandwidth in | Bandwidth out |
+| -------- | ----------- | ------- | ------------ | ------------- |
+| Ready    | Billed      | Billed  | Billed       | Billed        |
+| Loading  | Billed      | Billed  | Billed       | Billed        |
+| Creating | Not billed  | Billed  | Billed       | Billed        |
+| Inactive | Not billed  | Billed  | Billed       | Billed        |
+
+GPU compute refers to the per-second GPU rental charges. See the [Billing Help](/documentation/reference/billing#ugwiY) page for rate details.
+
+# Serverless Parameters
+
+> Learn about the parameters that can be configured for Vast.ai Serverless endpoints and worker groups.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Vast.ai Serverless Parameters Reference",
+  "description": "Complete reference for Vast.ai Serverless parameters including endpoint parameters (cold_mult, cold_workers, max_workers, min_load, target_util) and workergroup parameters (gpu_ram, launch_args, search_params, template_hash, template_id, test_workers).",
+  "author": {
+    "@type": "Organization",
+    "name": "Vast.ai"
+  },
+  "articleSection": "Serverless Documentation",
+  "keywords": ["parameters", "configuration", "endpoints", "workergroups", "scaling", "serverless", "vast.ai"]
+})
+}}
+/>
+
+The Vast.ai Serverless system has parameters that allow control over the scaling behavior.&#x20;
+
+# Endpoint Parameters
+
+## cold\_mult
+
+A multiplier applied to your target capacity for longer-term planning (1+ hours). This parameter controls how much extra capacity the serverless engine will plan for in the future compared to immediate needs. For example, if your current target capacity is 100 tokens/sec and cold\_mult is 2.0, the system will plan to have capacity for 200 tokens/sec for longer-term scenarios.
+
+This helps ensure your endpoint has sufficient "cold" (stopped but ready) workers available to handle future load spikes without delay. A higher value means more aggressive capacity planning and better preparedness for sudden traffic increases, while a lower value reduces costs from maintaining stopped instances.
+
+If not specified during endpoint creation, the default value is 2.5.
+
+## cold\_workers
+
+The minimum number of workers that must be kept in a "ready quick" state before the serverless engine is allowed to destroy any workers. A worker is considered "ready quick" if it's either:
+\- Actively serving (status = "idle" with model loaded)
+\- Stopped but ready (status = "stopped" with model loaded)
+
+Cold workers are not shut-down, they are stopped but have the model fully loaded. This means they can start serving requests very quickly (seconds) without having to re-download the model or benchmark the GPU performance.
+
+If not specified during endpoint creation, the default value is 5.
+
+## max\_workers
+
+A hard upper limit on the total number of worker instances (ready, stopped, loading, etc.) that your endpoint can have at any given time.
+
+If not specified during endpoint creation, the default value is 20.
+
+## min\_load
+
+A minimum baseline load (measured in tokens/second for LLMs) that the serverless system will assume your Endpoint needs to handle, regardless of actual measured traffic. This acts as a "floor" for load predictions across all time horizons (1 second to 24+ hours), ensuring your endpoint maintains minimum capacity even during periods of zero or very low traffic.
+
+For example, if your min\_load is set to 100 tokens/second, but your endpoint currently has zero traffic, the serverless system will still plan capacity as if you need to handle at least 100 tokens/second. This prevents the endpoint from scaling down to zero capacity and ensures you're always ready for incoming requests.
+
+If not specified during endpoint creation, the default value is 10.
+
+## target\_util
+
+The target utilization ratio determines how much spare capacity (headroom) the serverless system maintains. For example, if your predicted load is 900 tokens/second and target\_util is 0.9, the serverless engine will plan for 1000 tokens/second of capacity (900 ÷ 0.9 = 1000), leaving 100 tokens/second (11%) as buffer for traffic spikes.
+
+A lower target\_util means more headroom:
+\- target\_util = 0.9 → 11.1% spare capacity relative to load
+\- target\_util = 0.8 → 25% spare capacity relative to load
+\- target\_util = 0.5 → 100% spare capacity relative to load
+\- target\_util = 0.4 → 150% spare capacity relative to load
+
+If not specified during endpoint creation, the default value is 0.9.
+
+# Workergroup Parameters
+
+The parameters below are specific to only Workergroups, not Endpoints.
+
+## gpu\_ram
+
+The amount of GPU memory (VRAM) in gigabytes that your model or workload requires to run. This parameter tells the serverless engine how much GPU memory your model needs.
+
+If not specified during workergroup creation, the default value is 24.
+
+## launch\_args
+
+A command-line style string containing additional parameters for instance creation that will be parsed and applied when the serverless engine creates new workers. This allows you to customize instance configuration beyond what's specified in templates.
+
+There is no default value for launch\_args.
+
+## search\_params
+
+A query string, list, or dictionary that specifies the hardware and performance criteria for filtering GPU offers in the vast.ai marketplace. It uses a simple query syntax to define requirements for the machines that your Workergroup will consider when searching for workers to create.
+
+Example:
+
+```python icon="python" Python theme={null}
+{"verified": {"eq": true}, "rentable": {"eq": true}, "rented": {"eq": false}}
+```
+
+There is no default value for search\_params. To see all available search filters, see the CLI docs [here](https://docs.vast.ai/cli/commands).
+
+## template\_hash
+
+A unique hexadecimal identifier that references a pre-configured template containing all the configuration needed to create instances. Templates are comprehensive specifications that include the Docker image, environment variables, onstart scripts, resource requirements, and other deployment settings.
+
+There is no default value for template\_hash.
+
+## template\_id
+
+A numeric (integer) identifier that uniquely references a template in the Vast.ai database. This is an alternative way to reference the same template that `template_hash` points to, but using the template's database primary key instead of its hash string.
+
+There is no default value for template\_id.
+
+# Debugging
+
+> Learn how to debug issues with Vast.ai Serverless. Understand the worker errors, increasing and decreasing load, and how to check the instance logs.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Debug Vast.ai Serverless Issues",
+  "description": "A guide to debugging Vast.ai Serverless issues including checking worker errors, managing increasing load, and handling decreasing load.",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Check Worker Errors and Logs",
+      "text": "The Vast PyWorker framework automatically detects some errors, while others may cause instance timeout. To debug, check the instance logs via the logs button on the instance page in the GUI. For further investigation, SSH into the instance and find the model backend logs location by running 'echo $MODEL_LOG' and PyWorker logs by running 'echo ${WORKSPACE_DIR:-/workspace}/pyworker.log'."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Handle Increasing Load",
+      "text": "To handle high load on instances: Set test_workers high to create more instances initially for Worker Groups with anticipated high load. Adjust cold_workers to keep enough workers around to prevent destruction during low initial load. Increase cold_mult to quickly create instances by predicting higher future load. Check max_workers to ensure it's set high enough."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Manage Decreasing Load",
+      "text": "To manage decreasing load: Reduce cold_workers to stop instances quickly when load decreases to avoid unnecessary costs. The serverless system will handle this automatically, but manual adjustment can help if needed."
+    }
+  ]
+})
+}}
+/>
+
+## Worker Errors
+
+The [Vast PyWorker](https://github.com/vast-ai/pyworker/tree/main) framework automatically detects some errors, while others may cause the instance to timeout. When an error is detected, the Serverless system will destroy or
+reboot the instance. To manually debug an issue, check the instance logs available via the logs button on the instance page in the GUI. All PyWorker issues will be logged here.
+If further investigation is needed, ssh into the instance and find the model backend logs location by running:
+
+```sh Text   theme={null}
+echo "$MODEL_LOG"
+```
+
+And PyWorker logs:
+
+```sh Text theme={null}
+echo "${WORKSPACE_DIR:-/workspace}/pyworker.log"
+```
+
+### Increasing Load
+
+To handle high load on instances:
+
+* **Adjust&#x20;**`cold_workers`: Keep enough workers around to prevent them from being destroyed during low initial load.
+* **Increase&#x20;**`cold_mult`: Quickly create instances by predicting higher future load based on current high load. Adjust back down once enough instances are created.
+* **Check&#x20;**`max_workers`: Ensure this parameter is set high enough to create the necessary number of workers.
+
+### Decreasing Load
+
+To manage decreasing load:
+
+* **Reduce&#x20;**`cold_workers`: Stop instances quickly when the load decreases to avoid unnecessary costs. The serverless system will handle this automatically, but manual adjustment can help if needed.
+
+# PyWorker Overview
+
+> Learn about Vast.ai's Serverless system - the Vast PyWorker, integration with model instances, and creating custom backends.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Vast.ai PyWorker Overview",
+  "description": "Understanding the Vast PyWorker Python web server for serverless compatibility, including integration with model instances, communication with the serverless system, and creating custom backends.",
+  "author": {
+    "@type": "Organization",
+    "name": "Vast.ai"
+  },
+  "articleSection": "Serverless Documentation",
+  "keywords": ["PyWorker", "serverless", "Python", "web server", "model integration", "vast.ai", "custom backend"]
+})
+}}
+/>
+
+The Vast PyWorker is a Python web server designed to run alongside a machine learning model instance, providing serverless compatibility. It serves as the primary entry point for API requests, forwarding them to the model's API hosted on the same instance. Additionally, it monitors performance metrics and estimates current workload, reporting these metrics to the serverless system.
+
+<Note>
+  All of Vast's serverless templates use the Vast PyWorker. If you are using a recommended serverless template from Vast, the PyWorker is *already* integrated with the template and will automatically startup when a \{\{Worker\_Group}} is created.&#x20;
+</Note>
+
+<img src="https://mintcdn.com/vastai-80aa3a82/Wp3R6uoNeIDZvzDI/images/serverless-pyworker.webp?fit=max&auto=format&n=Wp3R6uoNeIDZvzDI&q=85&s=c72a382427d134cc0d7040d3264a2eda" alt="Pyworker Diagram" data-og-width="1254" width="1254" data-og-height="819" height="819" data-path="images/serverless-pyworker.webp" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/vastai-80aa3a82/Wp3R6uoNeIDZvzDI/images/serverless-pyworker.webp?w=280&fit=max&auto=format&n=Wp3R6uoNeIDZvzDI&q=85&s=affc610bc9da4d67bfb16275b0bc3e51 280w, https://mintcdn.com/vastai-80aa3a82/Wp3R6uoNeIDZvzDI/images/serverless-pyworker.webp?w=560&fit=max&auto=format&n=Wp3R6uoNeIDZvzDI&q=85&s=26446ff0a801b94e1d135ebf2d14dcc6 560w, https://mintcdn.com/vastai-80aa3a82/Wp3R6uoNeIDZvzDI/images/serverless-pyworker.webp?w=840&fit=max&auto=format&n=Wp3R6uoNeIDZvzDI&q=85&s=af2c9f2ba408fe01b023c0a6a22e2f93 840w, https://mintcdn.com/vastai-80aa3a82/Wp3R6uoNeIDZvzDI/images/serverless-pyworker.webp?w=1100&fit=max&auto=format&n=Wp3R6uoNeIDZvzDI&q=85&s=fd8f8e1eee822dd50ea959fd5a9d8d7b 1100w, https://mintcdn.com/vastai-80aa3a82/Wp3R6uoNeIDZvzDI/images/serverless-pyworker.webp?w=1650&fit=max&auto=format&n=Wp3R6uoNeIDZvzDI&q=85&s=ed1e64ac9cb0631836abed52d09ba4fd 1650w, https://mintcdn.com/vastai-80aa3a82/Wp3R6uoNeIDZvzDI/images/serverless-pyworker.webp?w=2500&fit=max&auto=format&n=Wp3R6uoNeIDZvzDI&q=85&s=293321da88543ed0d9543dee61f302e7 2500w" />
+
+In the diagram's example, a user's client is attempting to infer from a machine learning model. With Vast's Serverless setup, the client:
+
+1. Sends a [`/route/`](/documentation/serverless/route) POST request to the serverless system. This asks the system for a GPU instance to send the inference request.
+2. The serverless system selects a ready and available worker instance from the user's endpoint and replies with a JSON object containing the URL of the selected instance.
+3. The client then constructs a new POST request with it's payload, authentication data, and the URL of the worker instance. This is sent to the worker.
+4. The PyWorker running on that specific instance validates the request and extracts the payload. It then sends the payload to the model inference server, which runs on the same instance as the PyWorker.
+5. The model generates it's output and returns the result to the PyWorker.
+6. The PyWorker formats the model's response as needed, and sends the response back to the client.&#x20;
+7. Independently and concurrently, the PyWorker periodically sends it's operational metrics to the serverless system, which is used to make scaling decisions.
+
+The [Vast PyWorker repository](https://github.com/vast-ai/pyworker/) gives examples that are useful for learning how to create a custom PyWorker for your custom template and integrate with Vast’s Serverless system. Even with a custom PyWorker, the PyWorker code runs on your Vast instance, and we automate its installation and activation during instance creation. The graphic below shows how the files and entities for the Serverless system are organized.
+
+<img src="https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-pyworker-2.webp?fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=869303362e8072da8a86d83f1873290e" alt="" data-og-width="800" width="800" data-og-height="286" height="286" data-path="images/serverless-pyworker-2.webp" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-pyworker-2.webp?w=280&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=a545883f8697bc6b8fcb64802ef3aa3b 280w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-pyworker-2.webp?w=560&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=86116e519dc7391082ef9c13b624f542 560w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-pyworker-2.webp?w=840&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=1145536e0895620a01f18ddf97f0d03a 840w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-pyworker-2.webp?w=1100&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=f22c53a387af6abb48e1d40e065313b2 1100w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-pyworker-2.webp?w=1650&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=4d88f79cdd33348f20d32c16ffe75ec4 1650w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-pyworker-2.webp?w=2500&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=3248be1e9b8309d488303f9917ca064a 2500w" />
+
+## Integration with Model Instance
+
+The Vast PyWorker wraps the backend code of the model instance you are running. The PyWorker calls the appropriate backend function when the PyWorker's corresponding API endpoint is invoked. For example, if you are running a text generation inference (TGI) server, your PyWorker might receive the following JSON body from a `/generate` endpoint:&#x20;
+
+```json JSON icon="js" theme={null}
+{
+  "auth_data": {
+    "signature": "a_base64_encoded_signature_string_from_route_endpoint",
+    "cost": 256,
+    "endpoint": "Your-TGI-Endpoint-Name",
+    "reqnum": 1234567890,
+    "url": "http://worker-ip-address:port",
+    "request_idx": 10203040
+  },
+  "payload": {
+    "inputs": "What is the answer to the universe?",
+    "parameters": {
+      "max_new_tokens": 256,
+      "temperature": 0.7,
+      "top_p": 0.9,
+      "do_sample": true
+    }
+  }
+}
+```
+
+When it receives this request, your PyWorker will internally send the following to the TGI model sever:
+
+```json JSON icon="js" theme={null}
+{
+  "inputs": "What is the answer to the universe?",
+  "parameters": {
+    "max_new_tokens": 256,
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "do_sample": true
+  }
+}
+```
+
+Your PyWorker would similarily receive the output result from the TGI server, and forward a formatted version to the client.
+
+## Communication with Serverless
+
+If you are building a custom PyWorker for your own use case, to be able to integrate with Vast's serverless system, each backend must:
+
+* Send a message to the serverless system when the backend server is ready (e.g., after model installation).
+* Periodically send performance metrics to the serverless system to optimize usage and performance.
+* Periodically send completed request indices to the serverless system to track request lifetimes.
+* Report any errors to the serverless system.
+
+For example implementations, reference the [Vast PyWorker repository](https://github.com/vast-ai/pyworker/).
+
+## Creating a Custom Backend
+
+If you want to create your own backend and learn how to integrate with the serverless system, please refer to the following guides:&#x20;
+
+* [Creating New PyWorkers](/documentation/serverless/creating-new-pyworkers)
+
+## Vast Supported Backends
+
+Vast has pre-made templates for popular models such as [Text-Generation-Inference](/documentation/serverless/text-generation-inference-tgi)
+and [Comfy UI](/documentation/serverless/comfy-ui). These templates allow you to use these models in API mode, automatically handling performance and error tracking, making them compatible with Vast Serverless with no additional code required.
+
+To get started with Vast-supported backends, see the [Inside a Severless GPU](/documentation/serverless/inside-a-serverless-gpu) guide.
+
+# Inside a Serverless GPU
+
+> Learn about the components of a Serverless GPU instance - the core ML model, model server code, and PyWorker server code.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Inside a Vast.ai Serverless GPU",
+  "description": "Understanding the three components of a Serverless GPU instance: the core ML model, model server code, and PyWorker server code, including backend configuration and authentication.",
+  "author": {
+    "@type": "Organization",
+    "name": "Vast.ai"
+  },
+  "articleSection": "Serverless Documentation",
+  "keywords": ["PyWorker", "ML model", "backend", "authentication", "serverless GPU", "vast.ai"]
+})
+}}
+/>
+
+All GPU instances on Vast Serverless contain three parts:
+
+1. The core ML model.
+2. The model server code that handles requests and inferences the ML model.
+3. The [PyWorker](/documentation/serverless/overview) server code that wraps the ML model, which formats incoming HTTP requests into a compatible format for the model server.
+
+<img src="https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-inside.webp?fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=91cb81e587fbb2e78d3a431aa4270c76" alt="Backend diagram" data-og-width="800" width="800" data-og-height="295" height="295" data-path="images/serverless-inside.webp" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-inside.webp?w=280&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=cb6f8b393e3b30c2c730d8b213c26416 280w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-inside.webp?w=560&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=42132dc13ec899dc1f2a0c053db77949 560w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-inside.webp?w=840&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=05e5ca072208e07884f8218fbd91475b 840w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-inside.webp?w=1100&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=676f7c51f2e5a13a5ba35cb993a2de27 1100w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-inside.webp?w=1650&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=84b01d6be4b3337ae1bd9047b1486834 1650w, https://mintcdn.com/vastai-80aa3a82/_4z8utTktrZmQOU6/images/serverless-inside.webp?w=2500&fit=max&auto=format&n=_4z8utTktrZmQOU6&q=85&s=cd95de65c5a1a52839d7132bfdaaa8d9 2500w" />
+
+The term 'Backend' refers to the machine learning model itself, and the supplementary code used to make its inference work.
+
+On Vast Serverless, the only way to access the ML model is through the PyWorker that wraps it. This allows the PyWorker to report accurate metrics to the serverless system so it can size the number of GPU instances appropriatley.&#x20;
+
+## Backend Configuration
+
+Once a User has connected to a GPU Instance over Vast, the backend will start its own launch script. The launch script will:
+
+* Setup a log file.
+* Start a webserver to communicate with the ML model and PyWorker.
+* Set environment variables.
+* Launch the PyWorker and create a directory for it.
+* Monitor the webserver and PyWorker processes.
+
+After launch, the PyWorker acts as an inference API server façade, receiving HTTP requests, parsing them, and turning them into internal calls. &#x20;
+
+The 'Model Server' icon in the image above represents the inference runtime. This piece loads the model, exposes an interface, performs the model forward pass, and returns the resulting tensors to the PyWorker.
+
+## Adding Endpoints
+
+To add an endpoint to an existing backend, follow the instructions in the [PyWorker Extension Guide](/documentation/serverless/creating-new-pyworkers). This guide can also be used to write new backends.
+
+## Authentication
+
+The authentication information returned by [https://run.vast.ai/route/ ](/documentation/serverless/route)must be included in the request JSON to the PyWorker, but will be filtered out before forwarding to the model server. For example, a PyWorker expects to receive auth data in the request:
+
+```json JSON icon="js" theme={null}
+{
+  "auth_data": {
+    "signature": "a_base64_encoded_signature_string_from_route_endpoint",
+    "cost": 256,
+    "endpoint": "Your-Endpoint-Name",
+    "reqnum": 1234567890,
+    "url": "http://worker-ip-address:port",
+    "request_idx": 10203040
+  },
+  "payload": {
+    "inputs": "What is the answer to the universe?",
+    "parameters": {
+      "max_new_tokens": 256,
+      "temperature": 0.7,
+      "top_p": 0.9,
+      "do_sample": true
+    }
+  }
+}
+```
+
+Once authenticated, the PyWorker will forward the following to the model server:
+
+```json JSON icon="js" theme={null}
+{
+  "inputs": "What is the answer to the universe?",
+  "parameters": {
+    "max_new_tokens": 256,
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "do_sample": true
+  }
+}
+```
+
+When the Serverless system returns an instance address from the `/route/` endpoint, it provides a unique signature with your request. The authentication server verifies this signature to ensure that only authorized clients can send requests to your server.
+
+## More Information
+
+For more detailed information and advanced configuration, visit the [Vast PyWorker repository](https://github.com/vast-ai/pyworker/).
+
+Vast also has pre-made backends in our supported templates, which can be found in the Serverless section [here](https://cloud.vast.ai/templates/).&#x20;
+
+##
+
+# Creating New PyWorkers
+
+> Learn how to create a new PyWorker for Vast.ai Serverless. Understand the structure of a PyWorker, the required files, and how to implement the server.py module.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Create New PyWorkers for Vast.ai Serverless",
+  "description": "A comprehensive guide to creating custom PyWorkers for Vast.ai Serverless, including understanding the structure, implementing data_types.py, creating endpoint handlers in server.py, and load testing.",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Understand PyWorker Structure",
+      "text": "All PyWorkers have four files: __init__.py (blank file), data_types.py (contains data types representing model API endpoints), server.py (contains endpoint handlers), and test_load.py (script for load testing). All classes follow strict type hinting for error detection."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Implement data_types.py",
+      "text": "Define how the PyWorker interacts with the ML model by creating a class that inherits from lib.data_types.ApiPayload. Implement required functions: for_test() (creates payload for load testing), generate_payload_json() (converts ApiPayload to JSON), count_workload() (calculates workload), and from_json_msg() (transforms JSON to AuthData and payload type)."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Create EndpointHandler in server.py",
+      "text": "For each ML model API endpoint, implement an EndpointHandler class that inherits from EndpointHandler. Define the endpoint property, payload_cls() method, generate_payload_json() method, make_benchmark_payload() method, and generate_client_response() method to handle incoming requests and format responses."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Instantiate Backend and Configure Routes",
+      "text": "Create a Backend instance with model_server_url, model_log_file, allow_parallel_requests flag, benchmark_handler, and log_actions. Define additional routes like ping and healthcheck handlers. Create routes array with all endpoint handlers and start the server."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Implement test_load.py for Load Testing",
+      "text": "Create a load testing script using lib.test_harness.run() with InputData.for_test() and the worker endpoint. Run the script with parameters: -n (total requests), -rps (rate per second), -k (Vast API key), and -e (endpoint name)."
+    }
+  ]
+})
+}}
+/>
+
+This guide walks you through the structure of a PyWorker. By the end, you will know all of the pieces of a PyWorker and be able to create your own. &#x20;
+
+<Note>
+  Vast has pre-made templates with PyWorkers already built-in. Search the [templates section](/documentation/templates/quickstart) first to see if a supported template works for your use case.&#x20;
+</Note>
+
+[This repo](https://github.com/vast-ai/pyworker/tree/main) contains all the components of a PyWorker. Simply for pedagogical purposes, the `workers/hello_world/` PyWorker is created for an LLM server with two API endpoints:
+
+1. `/generate`: generates a LLM response and sends a JSON response
+2. `/generate_stream`: streams a response one token at a time
+
+Both of these endpoints take the same API JSON payload:
+
+```json JSON icon="js" theme={null}
+{
+    "prompt": String,
+    "max_response_tokens": Number | null
+}
+```
+
+***
+
+## Structure
+
+All PyWorkers have four files:
+
+```text Text theme={null}
+.
+└── workers
+    └── hello_world
+        ├── __init__.py # blank file
+        ├── data_types.py # contains data types representing model API endpoints
+        ├── server.py # contains endpoint handlers
+        └── test_load.py # script for load testing
+
+```
+
+All of the classes follow strict type hinting. It is recommended that you type hint all of your functions. This will allow your IDE or VSCode with `pyright` plugin to find any type errors in your implementation. You can also install `pyright` with `npm install pyright` and run `pyright` in the root of the project to find any type errors.
+
+### \_\_init\_\_.py
+
+The `__init__.py`file is left blank. This tells the Python interpreter to treat the hello\_world directory as a package. This allows us to import modules from within the directory. &#x20;
+
+### data\_types.py
+
+This file defines how the PyWorker interacts with the ML model, and must adhere to the common framework laid out in `lib/data_types.py`. The file implements the specific request structure and payload handling that will be used in `server.py`.&#x20;
+
+Data handling classes must inherit from `lib.data_types.ApiPayload`. `ApiPayload` is an abstract class that needs several functions defined for it. Below is an example implementation from the hello\_world PyWorker that shows how to use the `ApiPayload` class.&#x20;
+
+```python icon="python" Python theme={null}
+import dataclasses
+import random
+from typing import Dict, Any
+
+from transformers import AutoTokenizer # used to count tokens in a prompt
+import nltk # used to download a list of all words to generate a random prompt and benchmark the LLM model
+
+from lib.data_types import ApiPayload
+
+nltk.download("words")
+WORD_LIST = nltk.corpus.words.words()
+
+#### you can use any tokenizer that fits your LLM. `openai-gpt` is free to use and is a good fit for most LLMs
+tokenizer = AutoTokenizer.from_pretrained("openai-community/openai-gpt")
+
+@dataclasses.dataclass
+class InputData(ApiPayload):
+    prompt: str
+    max_response_tokens: int
+
+    @classmethod
+    def for_test(cls) -> "ApiPayload":
+        """defines how create a payload for load testing"""
+        prompt = " ".join(random.choices(WORD_LIST, k=int(250)))
+        return cls(prompt=prompt, max_response_tokens=300)
+
+    def generate_payload_json(self) -> Dict[str, Any]:
+        """defines how to convert an ApiPayload to JSON that will be sent to model API"""
+        return dataclasses.asdict(self)
+
+    def count_workload(self) -> float:
+        """defines how to calculate workload for a payload"""
+        return len(tokenizer.tokenize(self.prompt))
+
+    @classmethod
+    def from_json_msg(cls, json_msg: Dict[str, Any]) -> "InputData":
+        """
+        defines how to transform JSON data to AuthData and payload type,
+        in this case `InputData` defined above represents the data sent to the model API.
+        AuthData is data generated by the serverless system in order to authenticate payloads.
+        In this case, the transformation is simple and 1:1. That is not always the case. See comfyui's PyWorker
+        for more complicated examples
+        """
+        errors = {}
+        for param in inspect.signature(cls).parameters:
+            if param not in json_msg:
+                errors[param] = "missing parameter"
+        if errors:
+            raise JsonDataException(errors)
+        return cls(
+            **{
+                k: v
+                for k, v in json_msg.items()
+                if k in inspect.signature(cls).parameters
+            }
+        )
+
+```
+
+Your specific use case could require additional classes or methods. Reference the TGI worker as another example.
+
+### server.py
+
+For every ML model API endpoint you want to use, you must implement an `EndpointHandler`. This class handles incoming requests, processes them, sends them to the model API server, and finally returns an HTTP response with the model's results. `EndpointHandler` has several abstract functions that must be implemented. Here, we implement the `/generate` endpoint functionality for the PyWorker by creating the `GenerateHandler` class that inherits from `EndpointHandler`.
+
+![EndpointHandler class allows the PyWorker and Model Server to communicate.](https://archbee-image-uploads.s3.amazonaws.com/pNFur-Vy38DOi0g2bo5iM-Xkpobv-ceFYbciTKsmDIK-20250529-195514.png)
+
+```python icon="python" Python theme={null}
+
+"""
+AuthData is a dataclass that represents Authentication data sent from the serverless system to the client requesting a route.
+When a user requests a route, see Vast's Serverless documentation for how routing and AuthData
+work.
+When a user receives a route for this PyWorker, they'll call PyWorkers API with the following JSON:
+{
+    auth_data: AuthData,
+    payload : InputData # defined above
+}
+"""
+from aiohttp import web
+
+from lib.data_types import EndpointHandler, JsonDataException
+from lib.server import start_server
+from .data_types import InputData
+
+#### This class is the implementer for the '/generate' endpoint of model API
+@dataclasses.dataclass
+class GenerateHandler(EndpointHandler[InputData]):
+
+    @property
+    def endpoint(self) -> str:
+        # the API endpoint
+        return "/generate"
+
+    @classmethod
+    def payload_cls(cls) -> Type[InputData]:
+        """this function should just return ApiPayload subclass used by this handler"""
+        return InputData
+
+    def generate_payload_json(self, payload: InputData) -> Dict[str, Any]:
+        """
+        defines how to convert `InputData` defined above, to
+        JSON data to be sent to the model API. This function too is a simple dataclass -> JSON, but
+        can be more complicated, See comfyui for an example
+        """
+        return dataclasses.asdict(payload)
+
+    def make_benchmark_payload(self) -> InputData:
+        """
+        defines how to generate an InputData for benchmarking. This needs to be defined in only
+        one EndpointHandler, the one passed to the backend as the benchmark handler. Here we use the .for_test()
+        method on InputData. However, in some cases you might need to fine tune your InputData used for
+        benchmarking to closely resemble the average request users call the endpoint with in order to get the best
+        performance
+        """
+        return InputData.for_test()
+
+    async def generate_client_response(
+        self, client_request: web.Request, model_response: ClientResponse
+    ) -> Union[web.Response, web.StreamResponse]:
+        """
+        defines how to convert a model API response to a response to PyWorker client
+        """
+        _ = client_request
+        match model_response.status:
+            case 200:
+                log.debug("SUCCESS")
+                data = await model_response.json()
+                return web.json_response(data=data)
+            case code:
+                log.debug("SENDING RESPONSE: ERROR: unknown code")
+                return web.Response(status=code)
+
+
+```
+
+We also handle `GenerateStreamHandler` for streaming responses. It is identical to `GenerateHandler`, except that this implementation creates a web response:
+
+```python icon="python" Python theme={null}
+class GenerateStreamHandler(EndpointHandler[InputData]):
+    @property
+    def endpoint(self) -> str:
+        return "/generate_stream"
+
+    @classmethod
+    def payload_cls(cls) -> Type[InputData]:
+        return InputData
+
+    def generate_payload_json(self, payload: InputData) -> Dict[str, Any]:
+        return dataclasses.asdict(payload)
+
+    def make_benchmark_payload(self) -> InputData:
+        return InputData.for_test()
+
+    async def generate_client_response(
+        self, client_request: web.Request, model_response: ClientResponse
+    ) -> Union[web.Response, web.StreamResponse]:
+        match model_response.status:
+            case 200:
+                log.debug("Streaming response...")
+                res = web.StreamResponse()
+                res.content_type = "text/event-stream"
+                await res.prepare(client_request)
+                async for chunk in model_response.content:
+                    await res.write(chunk)
+                await res.write_eof()
+                log.debug("Done streaming response")
+                return res
+            case code:
+                log.debug("SENDING RESPONSE: ERROR: unknown code")
+                return web.Response(status=code)
+
+
+```
+
+You can now instantiate a Backend and use it to handle requests.
+
+```python icon="python" Python theme={null}
+from lib.backend import Backend, LogAction
+
+#### the url and port of model API
+MODEL_SERVER_URL = "http://0.0.0.0:5001"
+
+
+#### This is the log line that is emitted once the server has started
+MODEL_SERVER_START_LOG_MSG = "server has started"
+MODEL_SERVER_ERROR_LOG_MSGS = [
+    "Exception: corrupted model file"  # message in the logs indicating the unrecoverable error
+]
+
+backend = Backend(
+    model_server_url=MODEL_SERVER_URL,
+    # location of model log file
+    model_log_file=os.environ["MODEL_LOG"],
+    # for some model backends that can only handle one request at a time, be sure to set this to False to
+    # let PyWorker handling queueing requests.
+    allow_parallel_requests=True,
+    # give the backend an EndpointHandler instance that is used for benchmarking
+    # number of benchmark run and number of words for a random benchmark run are given
+    benchmark_handler=GenerateHandler(benchmark_runs=3, benchmark_words=256),
+    # defines how to handle specific log messages. See docstring of LogAction for details
+    log_actions=[
+        (LogAction.ModelLoaded, MODEL_SERVER_START_LOG_MSG),
+        (LogAction.Info, '"message":"Download'),
+        *[
+            (LogAction.ModelError, error_msg)
+            for error_msg in MODEL_SERVER_ERROR_LOG_MSGS
+        ],
+    ],
+)
+
+#### this is a simple ping handler for PyWorker
+async def handle_ping(_: web.Request):
+    return web.Response(body="pong")
+
+#### this is a handler for forwarding a health check to model API
+async def handle_healthcheck(_: web.Request):
+    healthcheck_res = await backend.session.get("/healthcheck")
+    return web.Response(body=healthcheck_res.content, status=healthcheck_res.status)
+
+routes = [
+    web.post("/generate", backend.create_handler(GenerateHandler())),
+    web.post("/generate_stream", backend.create_handler(GenerateStreamHandler())),
+    web.get("/ping", handle_ping),
+    web.get("/healthcheck", handle_healthcheck),
+]
+
+if __name__ == "__main__":
+    # start server, called from start_server.sh
+    start_server(backend, routes)
+```
+
+The full module is written in the `server.py` implementation of the hello\_world PyWorker, as shown here:
+
+```python icon="python" Python theme={null}
+"""
+PyWorker works as a man-in-the-middle between the client and model API. It's function is:
+1. receive request from client, update metrics such as workload of a request, number of pending requests, etc.
+2a. transform the data and forward the transformed data to model API
+2b. send updated metrics to autoscaler
+3. transform response from model API(if needed) and forward the response to client
+
+PyWorker forward requests to many model API endpoint. each endpoint must have an EndpointHandler. You can also
+write function to just forward requests that don't generate anything with the model to model API without an
+EndpointHandler. This is useful for endpoints such as healthchecks. See below for example
+"""
+
+import os
+import logging
+import dataclasses
+from typing import Dict, Any, Union, Type
+
+from aiohttp import web, ClientResponse
+
+from lib.backend import Backend, LogAction
+from lib.data_types import EndpointHandler
+from lib.server import start_server
+from .data_types import InputData
+
+# the url and port of model API
+MODEL_SERVER_URL = "http://0.0.0.0:5001"
+
+
+# This is the log line that is emitted once the server has started
+MODEL_SERVER_START_LOG_MSG = "infer server has started"
+MODEL_SERVER_ERROR_LOG_MSGS = [
+    "Exception: corrupted model file"  # message in the logs indicating the unrecoverable error
+]
+
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s[%(levelname)-5s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+log = logging.getLogger(__file__)
+
+
+# This class is the implementer for the '/generate' endpoint of model API
+@dataclasses.dataclass
+class GenerateHandler(EndpointHandler[InputData]):
+
+    @property
+    def endpoint(self) -> str:
+        # the API endpoint
+        return "/generate"
+
+    @classmethod
+    def payload_cls(cls) -> Type[InputData]:
+        return InputData
+
+    def generate_payload_json(self, payload: InputData) -> Dict[str, Any]:
+        """
+        defines how to convert `InputData` defined above, to
+        json data to be sent to the model API
+        """
+        return dataclasses.asdict(payload)
+
+    def make_benchmark_payload(self) -> InputData:
+        """
+        defines how to generate an InputData for benchmarking. This needs to be defined in only
+        one EndpointHandler, the one passed to the backend as the benchmark handler
+        """
+        return InputData.for_test()
+
+    async def generate_client_response(
+        self, client_request: web.Request, model_response: ClientResponse
+    ) -> Union[web.Response, web.StreamResponse]:
+        """
+        defines how to convert a model API response to a response to PyWorker client
+        """
+        _ = client_request
+        match model_response.status:
+            case 200:
+                log.debug("SUCCESS")
+                data = await model_response.json()
+                return web.json_response(data=data)
+            case code:
+                log.debug("SENDING RESPONSE: ERROR: unknown code")
+                return web.Response(status=code)
+
+
+# This is the same as GenerateHandler, except that it calls a streaming endpoint of the model API and streams the
+# response, which itself is streaming, back to the client.
+# it is nearly identical to handler as above, but it calls a different model API endpoint and it streams the
+# streaming response from model API to client
+class GenerateStreamHandler(EndpointHandler[InputData]):
+    @property
+    def endpoint(self) -> str:
+        return "/generate_stream"
+
+    @classmethod
+    def payload_cls(cls) -> Type[InputData]:
+        return InputData
+
+    def generate_payload_json(self, payload: InputData) -> Dict[str, Any]:
+        return dataclasses.asdict(payload)
+
+    def make_benchmark_payload(self) -> InputData:
+        return InputData.for_test()
+
+    async def generate_client_response(
+        self, client_request: web.Request, model_response: ClientResponse
+    ) -> Union[web.Response, web.StreamResponse]:
+        match model_response.status:
+            case 200:
+                log.debug("Streaming response...")
+                res = web.StreamResponse()
+                res.content_type = "text/event-stream"
+                await res.prepare(client_request)
+                async for chunk in model_response.content:
+                    await res.write(chunk)
+                await res.write_eof()
+                log.debug("Done streaming response")
+                return res
+            case code:
+                log.debug("SENDING RESPONSE: ERROR: unknown code")
+                return web.Response(status=code)
+
+
+# This is the backend instance of pyworker. Only one must be made which uses EndpointHandlers to process
+# incoming requests
+backend = Backend(
+    model_server_url=MODEL_SERVER_URL,
+    model_log_file=os.environ["MODEL_LOG"],
+    allow_parallel_requests=True,
+    # give the backend a handler instance that is used for benchmarking
+    # number of benchmark run and number of words for a random benchmark run are given
+    benchmark_handler=GenerateHandler(benchmark_runs=3, benchmark_words=256),
+    # defines how to handle specific log messages. See docstring of LogAction for details
+    log_actions=[
+        (LogAction.ModelLoaded, MODEL_SERVER_START_LOG_MSG),
+        (LogAction.Info, '"message":"Download'),
+        *[
+            (LogAction.ModelError, error_msg)
+            for error_msg in MODEL_SERVER_ERROR_LOG_MSGS
+        ],
+    ],
+)
+
+
+# this is a simple ping handler for pyworker
+async def handle_ping(_: web.Request):
+    return web.Response(body="pong")
+
+
+# this is a handler for forwarding a health check to modelAPI
+async def handle_healthcheck(_: web.Request):
+    healthcheck_res = await backend.session.get("/healthcheck")
+    return web.Response(body=healthcheck_res.content, status=healthcheck_res.status)
+
+
+routes = [
+    web.post("/generate", backend.create_handler(GenerateHandler())),
+    web.post("/generate_stream", backend.create_handler(GenerateStreamHandler())),
+    web.get("/ping", handle_ping),
+    web.get("/healthcheck", handle_healthcheck),
+]
+
+if __name__ == "__main__":
+    # start the PyWorker server
+    start_server(backend, routes)
+
+```
+
+### test\_load.py
+
+Once a Serverless Endpoint is setup with a \{\{Worker\_Group}}, the `test_load` module lets us test the running instances:
+
+```python icon="python" Python theme={null}
+from lib.test_harness import run
+from .data_types import InputData
+
+WORKER_ENDPOINT = "/generate"
+
+if __name__ == "__main__":
+    run(InputData.for_test(), WORKER_ENDPOINT)
+```
+
+To run the script, provide the following parameters:
+
+* -n is the total number of requests to be send to the Endpoint
+* -rps is the rate (rate per second) at which the requests will be sent
+* -k is your Vast API key. You can define it in your environment or paste it into the command
+* -e is the name of the Serverless Endpoint
+
+You can run the following command from the root of the PyWorker repo:
+
+```sh Text theme={null}
+python3 workers.hello_world.test_load -n 1000 -rps 0.5 -k "$API_KEY" -e "$ENDPOINT_NAME"
+```
+
+<Warning>
+  Be sure to define "API\_KEY" and "ENDPOINT\_NAME" in your environment before running, or replace these names with their actual values.
+</Warning>
+
+A successful test with n = 10 requests would look like the following. This test used 4 different GPU workers in the Worker Group for the 10 requests it was sent.
+
+![](https://archbee-image-uploads.s3.amazonaws.com/pNFur-Vy38DOi0g2bo5iM-W6jDkmy1YdfcCRnHfYVU_-20250603-002408.png)
+
+***
+
+These are all the parts of a PyWorker! You will also find a client.py module in the worker folders of the repo. While it is *not* part of the PyWorker, Vast provides it as an example of how a user could interact with their model on the serverless system. The client.py file is not needed for the PyWorker to run on a GPU instance, and is intended to run on your local machine. The PyWorker [Overview](/documentation/serverless/overview) page shows more details.
+
+# Performance Testing
+
+> Learn about the performance testing process in Vast.ai Serverless. Understand how the test measures LLM and image generation capabilities, how it translates pixel generation to tokens, and how it normalizes performance across different GPUs.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Vast.ai Serverless Performance Testing",
+  "description": "Understanding the performance testing process in Vast.ai Serverless including LLM token generation measurement, image generation pixel-to-token translation, and performance normalization across different GPUs.",
+  "author": {
+    "@type": "Organization",
+    "name": "Vast.ai"
+  },
+  "articleSection": "Serverless Documentation",
+  "keywords": ["performance testing", "benchmarking", "LLM", "image generation", "tokens per second", "vast.ai", "PyWorker"]
+})
+}}
+/>
+
+When the serverless system recruits a GPU for a \{\{Worker\_Group}}, the PyWorker on the GPU instance starts by conducting a performance test to assess the GPU's maximum capabilities.
+
+### LLMs
+
+For LLMs, this test measures the maximum tokens per second that can be generated across concurrent batches.&#x20;
+
+### Image Generation
+
+For image generation, the model is generating pixels, which does not directly translate to tokens. To translate pixel generation to tokens, the test counts the number of 512x512 pixel grids required to cover the image resolution, considering each grid as equivalent to 175 tokens.&#x20;
+
+This value is added on top of a constant overhead token value of 85. Based on the number of diffusion steps performed, the value is adjusted to accomodate for the request time.
+
+The value is then normalized so that a system running Flux on a 4090 GPU achieves a standardized performance rating of 200 tokens per second.
+
+***
+
+These performance tests may take several minutes to complete, depending on the machine's specifications. Progress can be monitored through the instance logs. Once the test is completed, the results are saved. If the instance is rebooted, the saved results will be loaded, and the test will not run again.
+
+For more details on the full implementation, visit the [Vast PyWorker repository](https://github.com/vast-ai/pyworker/) and reference `backend.py` in the `lib/` folder of the PyWorker.
+
+# Route
+
+> Learn how to use the /route/ endpoint to retrieve a GPU instance address within your Endpoint. Understand the inputs, outputs, and examples for using the endpoint.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Vast.ai Serverless /route/ Endpoint",
+  "description": "API reference for the /route/ endpoint to retrieve a GPU instance address within your Vast.ai Serverless Endpoint, including inputs (endpoint, api_key, cost), outputs (url, reqnum, signature), and cURL examples.",
+  "author": {
+    "@type": "Organization",
+    "name": "Vast.ai"
+  },
+  "articleSection": "Serverless Documentation",
+  "keywords": ["route", "API endpoint", "GPU instance", "serverless", "vast.ai", "authentication"]
+})
+}}
+/>
+
+The `/route/` endpoint calls on the serverless engine to retrieve a GPU instance address within your Endpoint.
+Request lifetimes are tracked with a `request_idx`. If you wish to retry a request that failed without incurring additional load, you may use the `request_idx` to do so.
+
+# POST [https://run.vast.ai/route/](https://run.vast.ai/route/)
+
+## Inputs
+
+* `endpoint`(string): Name of the Endpoint.
+* `api_key`(string): The Vast API key associated with the account that controls the Endpoint. The key can also be placed in the header as an Authorization: Bearer.
+* `cost`(float): The estimated compute resources for the request. The units of this cost are defined by the PyWorker. The serverless engine uses the cost as an estimate of the request's workload, and can scale GPU instances to ensure the Endpoint has the proper compute capacity.
+* `request_idx`(int): A unique request index that tracks the lifetime of a single request. You don't need it for the first request, but you must pass one in to retry a request.
+
+```json JSON icon="js" theme={null}
+{
+    "endpoint": "YOUR_ENDPOINT_NAME",
+    "api_key": "YOUR_VAST_API_KEY",
+    "cost": 242.0,
+    "request_idx": 2421 # Only if retrying
+}
+```
+
+## Outputs
+
+### On Successful Worker Return
+
+* `url`(string): The address of the worker instance to send the request to.
+* `reqnum`(int): The request number corresponding to this worker instance. Note that workers expect to receive requests in approximately the same order as these reqnums, but some flexibility is allowed due to potential out-of-order requests caused by concurrency or small delays on the proxy server.
+* `signature`(string): The signature is a cryptographic string that authenticates the url, cost, and reqnum fields in the response, proving they originated from the server. Clients can use this signature, along with the server's public key, to verify that these specific details have not been tampered with.
+* `endpoint`(string): Same as the input parameter.
+* `cost`(float): Same as the input parameter.
+* `request_idx`(int): If it's a new request, check this field to get your request\_idx. Use this in calls to route if you wish to "retry" this request (in case of failure).
+* `__request_id `(string): The \_\_request\_id is a unique string identifier generated by the server for each individual API request it receives. This ID is created at the start of processing the request and included in the response, allowing for distinct tracking and logging of every transaction.
+
+```json JSON icon="js" theme={null}
+{
+    "endpoint": "YOUR_ENDPOINT_NAME",
+    "url": "http://192.168.1.10:8000",
+    "cost": 242.0,
+    "reqnum": 12345,
+    "signature": "a1b2c3d4e5f60708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40",
+    "__request_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+}
+```
+
+### On Failure to Find Ready Worker
+
+* `endpoint`: Same as the input parameter to `/route/`.
+* `status`: The breakdown of workers in your endpoint group by status.
+
+## Example: Hitting route with cURL
+
+```curl Curl icon="cube" theme={null}
+curl --location 'https://run.vast.ai/route/' \
+--header 'Accept: application/json' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer YOUR_TOKEN_HERE' \
+--data '{
+  "endpoint": "your_endpoint_name",
+  "cost": 100
+}'
+```
+
+# Logs
+
+> Learn how to fetch and analyze logs from Vast.ai Serverless endpoints and worker groups. Understand the log levels, how to use cURL to fetch logs, and how to interpret the logs for debugging and performance monitoring.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Vast.ai Serverless Logs",
+  "description": "API reference for fetching and analyzing logs from Vast.ai Serverless endpoints and worker groups using /get_endpoint_logs/ and /get_autogroup_logs/ endpoints, including log levels (debug, trace, info0, info1).",
+  "author": {
+    "@type": "Organization",
+    "name": "Vast.ai"
+  },
+  "articleSection": "Serverless Documentation",
+  "keywords": ["logs", "debugging", "endpoints", "worker groups", "serverless", "vast.ai", "monitoring"]
+})
+}}
+/>
+
+Both Endpoints and Worker Groups keep logs that can be fetched by using the `/get_endpoint_logs/` and `/get_autogroup_logs/` endpoints, respectively.
+
+Endpoint logs relate to managing instances, and Worker Group logs relate to searching for offers to create instances from, as well as calls to create instances using the offers.&#x20;
+
+For both types of groups, there are four levels of logs with decreasing levels of detail: **debug**, **trace**, **info0**, and **info1**.
+
+<Warning>
+  Each log level has a fixed size, and once it is full, the log is wiped and overwritten with new log messages. It is good practice to check these regularly while debugging.
+</Warning>
+
+# Using the CLI
+
+You can use the vastai CLI to quickly check endpoint and worker group logs at different log levels.
+
+## Endpoint logs
+
+```cli CLI Command theme={null}
+vastai get endpt-logs <endpoint_id> --level (0-3)
+```
+
+## Workergroup logs
+
+```cli CLI Command theme={null}
+vastai get wrkgrp-logs <worker_group_id> --level (0-3)
+```
+
+# POST [https://run.vast.ai/get\_endpoint\_logs/](https://run.vast.ai/get_endpoint_logs/)
+
+## Inputs
+
+* One of the following:
+  * `id`(int): ID of your endpoint
+  * `endpoint`(string): Name of your endpoint
+* `api_key`(string): The Vast API key associated with the account that controls the Endpoint.
+
+```json JSON icon="js" theme={null}
+{
+    "endpoint": "YOUR_ENDPOINT_NAME",
+    "api_key": "YOUR_VAST_API_KEY"
+}
+```
+
+## Outputs
+
+* `info0`: The contents of the `info0` log
+* `info1`: The contents of the `info1` log
+* `trace`: The contents of the `trace` log
+* `debug`: The contents of the `debug` log
+
+## Example: Fetching Endpoint Logs with cURL
+
+```curl Curl icon="cube" theme={null}
+curl https://run.vast.ai/get_endpoint_logs/ \
+-X POST \
+-d '{"endpoint" : 123, "api_key" : "API_KEY_HERE"}' \
+-H 'Content-Type: application/json'
+```
+
+***
+
+# POST [https://run.vast.ai/get\_autogroup\_logs/](https://run.vast.ai/get_autogroup_logs/)
+
+## Inputs
+
+* `id`(int): The ID of the Worker Group
+* `api_key`(string): The Vast API key associated with the account that controls the Worker Group.
+
+```json JSON icon="js" theme={null}
+{
+    "id": 1001,
+    "api_key": "YOUR_VAST_API_KEY"
+}
+```
+
+## Outputs
+
+* `info0`: The contents of the `info0` log
+* `info1`: The contents of the `info1` log
+* `trace`: The contents of the `trace` log
+* `debug`: The contents of the `debug` log
+
+## Example: Fetching Worker Group Logs with cURL
+
+```bash Bash theme={null}
+curl https://run.vast.ai/get_autogroup_logs/ \
+-X POST \
+-d '{"id" : 1001, "api_key" : "API_KEY_HERE"}' \
+-H 'Content-Type: application/json'
+```
+
+<Warning>
+  In some cases `info0` may not contain logs for a Worker Group.
+</Warning>
+
+# Worker List
+
+> Learn how to use the /get_endpoint_workers/ and /get_autogroup_workers/ endpoints to retrieve a list of GPU instances under an Endpoint and Worker Group. Understand the inputs, outputs, and examples for using the endpoints.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Vast.ai Serverless Worker List API",
+  "description": "API reference for retrieving GPU instances using /get_endpoint_workers/ and /get_autogroup_workers/ endpoints, including worker metrics (cur_load, cur_perf, disk_usage, reliability, status) and cURL examples.",
+  "author": {
+    "@type": "Organization",
+    "name": "Vast.ai"
+  },
+  "articleSection": "Serverless Documentation",
+  "keywords": ["worker list", "API", "GPU instances", "metrics", "monitoring", "serverless", "vast.ai"]
+})
+}}
+/>
+
+The `/get_endpoint_workers/` and `/get_autogroup_workers/` endpoints return a list of GPU instances under an Endpoint and \{\{Worker\_Group}}, respectively.&#x20;
+
+# [https://run.vast.ai/get\_endpoint\_workers/](https://run.vast.ai/get_endpoint_workers/)
+
+## Inputs
+
+* `id` (int): The id value of the Endpoint.
+* `api_key` (string): The Vast API key associated with the account that controls the Endpoint.
+
+The `api_key` could alternatively be provided in the request header as a bearer token.
+
+```json JSON icon="js" theme={null}
+{
+    "id": 123,
+    "api_key": "$API_KEY"
+}
+```
+
+## Outputs
+
+For each GPU instance in the Endpoint, the following will be returned:
+
+* `cur_load`(float): Current load (as defined by the PyWorker) the GPU instance is receiving per second.
+* `new_load` (float): Amount of load the GPU instance received recently.
+* `cur_load_rolling_avg`(float): Rolling average of `cur_load`.
+* `cur_perf`(float): The most recent or current operational performance level of the instance (as defined by the PyWorker). For example, a text generation model has the units of tokens generated per second.
+* `disk_usage`(float): Storage used by instance (in Gb).
+* `dlperf`(float): Measured DLPerf of the instance. DLPerf is explained [here.](/documentation/reference/faq/index)
+* `id`(int): Instance ID.
+* `loaded_at`(float): Unix epoch time the instance finished loading.
+* `measured_perf`(float): Benchmarked performances (tokens/s). Set to DLPerf if instance is not benchmarked.
+* `perf`(float): `measured_perf` \* `reliability`.
+* `reliability`(float): Uptime of the instance, ranges 0-1.
+* `reqs_working`(int): Number of active requests currently being processed by the instance.
+* `status`(string): Current status of the worker.
+
+```json JSON icon="js" theme={null}
+{
+    "cur_load": 150,
+    "new_load": 50,
+    "cur_load_rolling_avg": 50,
+    "cur_perf": 80,
+    "disk_usage": 30,
+    "dlperf": 105.87206734930771,
+    "id": 123456,
+    "loaded_at": 1724275993.997,
+    "measured_perf": 105.87206734930771,
+    "perf": 100.5784639818423245,
+    "reliability": 0.95,
+    "reqs_working": 2,
+    "status": "running"
+}
+```
+
+## Example
+
+### Python
+
+```python  theme={null}
+from vastai import Serverless
+import asyncio
+
+async def main():
+    async with Serverless() as client:
+        endpoint = await client.get_endpoint("test")
+        workers = await endpoint.get_workers()
+        for worker in workers:
+            print(worker)
+
+asyncio.run(main())
+```
+
+### curl
+
+Run the following Bash command in a terminal to receive Endpoint workers.
+
+```bash Bash theme={null}
+curl https://run.vast.ai/get_endpoint_workers/ \
+-X POST \
+-d '{"id" : 123, "api_key" : "API_KEY_HERE"}' \
+-H 'Content-Type: application/json'
+```
+
+***
+
+# [https://run.vast.ai/get\_autogroup\_workers/](https://run.vast.ai/get_autogroup_workers/)
+
+## Inputs
+
+* `id` (int): The id value of the Worker Group.
+* `api_key` (string): The Vast API key associated with the account that controls the Endpoint.
+
+The `api_key` could alternatively be provided in the request header as a bearer token.
+
+```json JSON icon="js" theme={null}
+{
+    "id": 1001,
+    "api_key": "$API_KEY"
+}
+```
+
+## Outputs
+
+For each GPU instance in the Worker Group, the following will be returned:
+
+* `cur_load`(float): Current load (as defined by the PyWorker) the GPU instance is receiving per second.
+* `new_load` (float): Amount of load the GPU instance received recently.
+* `cur_load_rolling_avg`(float): Rolling average of `cur_load`.
+* `cur_perf`(float): The most recent or current operational performance level of the instance (as defined by the PyWorker). For example, a text generation model has the units of tokens generated per second.
+* `disk_usage`(float): Storage used by instance (in Gb).
+* `dlperf`(float): Measured DLPerf of the instance. DLPerf is explained [here.](/documentation/reference/faq/index)
+* `id`(int): Instance ID.
+* `loaded_at`(float): Unix epoch time the instance finished loading.
+* `measured_perf`(float): Benchmarked performances (tokens/s). Set to DLPerf if instance is not benchmarked.
+* `perf`(float): `measured_perf` \* `reliability`.
+* `reliability`(float): Uptime of the instance, ranges 0-1.
+* `reqs_working`(int): Number of active requests currently being processed by the instance.
+* `status`(string): Current status of the worker.
+
+```json JSON icon="js" theme={null}
+{
+    "cur_load": 150,
+    "new_load": 50,
+    "cur_load_rolling_avg": 50,
+    "cur_perf": 80,
+    "disk_usage": 30,
+    "dlperf": 105.87206734930771,
+    "id": 123456,
+    "loaded_at": 1724275993.997,
+    "measured_perf": 105.87206734930771,
+    "perf": 100.5784639818423245,
+    "reliability": 0.95,
+    "reqs_working": 2,
+    "status": "running"
+}
+```
+
+## Example
+
+Run the following Bash command in a terminal to receive Worker Group workers.
+
+```bash Bash theme={null}
+curl https://run.vast.ai/get_autogroup_workers/ \
+-X POST \
+-d '{"id" : 1001, "api_key" : "API_KEY_HERE"}' \
+-H 'Content-Type: application/json'
+```
+
+# Create Endpoints and Workergroups
+
+> Learn how to create endpoints and workergroups in Vast.ai Serverless. Understand the inputs, outputs, and examples for creating endpoints and workergroups.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Creating Endpoints and Workergroups on Vast.ai Serverless",
+  "description": "API reference for creating endpoints and workergroups in Vast.ai Serverless using POST /endptjobs/ and POST /workergroups/ endpoints, including inputs, outputs, and cURL examples.",
+  "author": {
+    "@type": "Organization",
+    "name": "Vast.ai"
+  },
+  "articleSection": "Serverless Documentation",
+  "keywords": ["endpoints", "workergroups", "API", "serverless", "creation", "vast.ai", "parameters"]
+})
+}}
+/>
+
+The `/endptjobs/` and `/workergroups/` endpoints calls on the webserver to create a new Endpoint and Workergroup.
+
+# POST [https://console.vast.ai/api/v0/endptjobs/](https://console.vast.ai/api/v0/endptjobs/)
+
+## Inputs
+
+* `api_key`(string): The Vast API key associated with the account that controls the Endpoint. The key can also be placed in the header as an Authorization: Bearer.
+* `endpoint_name`(string): The name given to the endpoint that is created.
+* `min_load`(integer): A minimum baseline load (measured in tokens/second for LLMs) that the serverless engine will assume your Endpoint needs to handle, regardless of actual measured traffic.&#x20;
+* `target_util` (float): A ratio that determines how much spare capacity (headroom) the serverless engine maintains.
+* `cold_mult`(float): A multiplier applied to your target capacity for longer-term planning (1+ hours). This parameter controls how much extra capacity the serverless engine will plan for in the future compared to immediate needs.
+* `cold_workers` (integer): The minimum number of workers that must be kept in a "ready quick" state before the serverless engine is allowed to destroy any workers.&#x20;
+* `max_workers` (integer): A hard upper limit on the total number of worker instances (ready, stopped, loading, etc.) that your endpoint can have at any given time.
+
+```json JSON icon="js" theme={null}
+{
+    "api_key": "YOUR_VAST_API_KEY",
+    "endpoint_name": "YOUR_ENDPOINT_NAME",
+    "min_load": 10,
+    "target_util": 0.9,
+    "cold_mult": 2.0,
+    "cold_workers": 5,
+    "max_workers": 20
+}
+```
+
+## Outputs
+
+### On Successful Worker Return
+
+* `success`(bool): True on successful creation of Endpoint, False if otherwise.
+* `result`(int): The endpoint\_id of the newly created Endpoint.&#x20;
+
+```json JSON icon="js" theme={null}
+{
+  "success": true,
+  "result": 1234
+}
+```
+
+### On Failure to Find Ready Worker
+
+* `success`(bool): True on successful creation of Endpoint, False if otherwise.
+* `error`(string): The type of error status.
+* `msg` (string): The error message related to the error.
+
+```json JSON icon="js" theme={null}
+{
+  "success": false,
+  "error": "auth_error",
+  "msg": "Invalid user key"
+}
+```
+
+## Example: Creating an Endpoint with cURL
+
+```curl Curl icon="cube" theme={null}
+curl --location 'https://console.vast.ai/api/v0/endptjobs/' \
+--header 'Accept: application/json' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer MY_VAST_TOKEN_HERE' \
+--data '{
+  "min_load": 10,
+  "target_util": 0.9,
+  "cold_mult": 2.5,
+  "cold_workers": 5,
+  "max_workers": 20,
+  "endpoint_name": "my-endpoint"
+}'
+```
+
+## Example: Creating an Endpoint with the Vast CLI
+
+```none Terminal theme={null}
+vastai create endpoint --min_load 10 --target_util 0.9 --cold_mult 2.0 --cold_workers 5 --max_workers 20 --endpoint_name "my-endpoint"
+```
+
+***
+
+# POST [https://console.vast.ai/api/v0/workergroups/](https://console.vast.ai/api/v0/workergroups/)
+
+## Inputs
+
+**Required:**
+
+* `api_key`(string): The Vast API key associated with the account that controls the Endpoint. The key can also be placed in the header as an Authorization: Bearer.
+
+* `endpoint_name`(string): The name of the Endpoint that the Workergroup will be created under.
+  OR
+
+* 'endpoint\_id' (integer): The id of the Endpoint that the Workergroup will be created under.
+  AND one of the following:
+
+* `template_hash` (string): The hexadecimal string that identifies a particular template.&#x20;
+
+OR
+
+* `template_id` (integer): The unique id that identifes a template.
+
+NOTE: If you use either the template hash or id, you can skip `search_params`, as they are automatically inferred from the template.&#x20;
+
+OR
+
+* `search_params` (string): A query string that specifies the hardware and performance criteria for filtering GPU offers in the vast.ai marketplace.
+* `launch_args` (string): A command-line style string containing additional parameters for instance creation that will be parsed and applied when the autoscaler creates new workers. This allows you to customize instance configuration beyond what's specified in templates.
+
+**Optional** (Default values will be assigned if not specified):
+
+* `gpu_ram` (integer): The amount of GPU memory (VRAM) in gigabytes that your model or workload requires to run. This parameter tells the serverless engine how much GPU memory your model needs. Default value is 24.
+
+```json JSON icon="js" theme={null}
+{
+    "api_key": "YOUR_VAST_API_KEY",
+    "endpoint_name": "YOUR_ENDPOINT_NAME",
+    "template_hash": "YOUR_TEMPLATE_HASH",
+    "gpu_ram": 24
+}
+```
+
+## Outputs
+
+### On Successful Worker Return
+
+* `success`(bool): True on successful creation of Workergroup, False if otherwise.
+* `result`(int): The autogroup\_id of the newly created Workergroup.&#x20;
+
+```json JSON icon="js" theme={null}
+{
+  "success": true,
+  "result": 789
+}
+```
+
+### On Failure to Find Ready Worker
+
+* `success`(bool): True on successful creation of Workergroup, False if otherwise.
+* `error`(string): The type of error status.
+* `msg` (string): The error message related to the error.
+
+```json JSON icon="js" theme={null}
+{
+  "success": false,
+  "error": "auth_error",
+  "msg": "Invalid user key"
+}
+```
+
+## Example: Creating a Workergroup with cURL
+
+```curl Curl icon="cube" theme={null}
+curl --location 'https://console.vast.ai/api/v0/workergroups/' \
+--header 'Accept: application/json' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer MY_ENDPOINT_KEY' \
+--data '{
+  "endpoint_name": "MY_ENDPOINT",
+  "template_hash": "MY_TEMPLATE_HASH",
+  "gpu_ram": 24
+}'
+```
+
+## Example: Creating an Endpoint with the Vast CLI
+
+```none Terminal theme={null}
+vastai create workergroup --endpoint_name "MY_ENDPOINT" --template_hash "MY_TEMPLATE_HASH" --gpu_ram 24
+```
+
+# vLLM
+
+> Learn how to use vLLM with Vast.ai Serverless for large language model inference.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "vLLM with Vast.ai Serverless",
+  "description": "API reference for using vLLM with Vast.ai Serverless including environment variables (HF_TOKEN, MODEL_NAME, VLLM_ARGS), /v1/completions/ endpoint, and /v1/chat/completions/ endpoint with tool calling support.",
+  "author": {
+    "@type": "Organization",
+    "name": "Vast.ai"
+  },
+  "articleSection": "Serverless Documentation",
+  "keywords": ["vLLM", "LLM", "inference", "completions", "chat", "tools", "serverless", "API", "vast.ai"]
+})
+}}
+/>
+
+The vLLM Serverless template can be used to infer LLMs on Vast GPU instances. This page documents required environment variables and endpoints to get started.
+
+A full PyWorker and Client implementation can be found [here](https://github.com/vast-ai/pyworker/tree/main), which implements the endpoints below.
+
+# Environment Variables
+
+* `HF_TOKEN`(string): HuggingFace API token with read permissions, used to download gated models. Read more about HuggingFace tokens [here](https://huggingface.co/docs/hub/en/security-tokens). This token should be added to your Vast user account's environment variables. The [Getting Started](/documentation/serverless/getting-started-with-serverless) guide shows this in step 1.
+* `MODEL_NAME`(string): Name of the model to be used for inference. Supported HuggingFace models are shown [here.](https://huggingface.co/docs/text-generation-inference/en/supported_models)
+* `VLLM_ARGS`(string): vLLM specific arguments that are already pre-set in the template.&#x20;
+
+<Warning>
+  Some models on HuggingFace require the user to accept the terms and conditions on their HuggingFace account before using. For such models, this must be done first before using it with a Vast template.
+</Warning>
+
+# Endpoints
+
+## /v1/completions/&#x20;
+
+This endpoint generates a text completion that attempts to match any context or pattern  provided in a given prompt. Provide a text prompt, and the model returns the predicted continuation. This endpoint is best suited for single-turn tasks, whereas the /v1/chat/completions endpoint is optimized for multi-turn conversational scenarios.
+
+### Quickstart
+
+Here's a simple script using the `vastai-sdk` pip package to get up and running fast with vLLM:
+
+```python  theme={null}
+import asyncio
+from vastai import Serverless
+
+MAX_TOKENS = 128
+
+async def main():
+    async with Serverless() as client:
+        endpoint = await client.get_endpoint(name="my-endpoint")
+
+        payload = {
+            "input" : {
+                "model": "Qwen/Qwen3-8B",
+                "prompt" : "Who are you?",
+                "max_tokens" : MAX_TOKENS,
+                "temperature" : 0.7
+            }
+        }
+        
+        response = await endpoint.request("/v1/completions", payload, cost=MAX_TOKENS)
+        print(response["response"]["choices"][0]["text"])
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### Inputs
+
+payload:
+
+* `input`:
+  * `model`(string): The specific identifier of the model to be used for generating the text completion.
+  * `prompt`(optional, string): The input text that the model will use as a starting point to generate a response. Default is "Hello".
+  * `max_tokens`(optional, int): The maximum number of tokens the model will generate for the response to the input. Default is 256.
+  * `temperature`(optional, float): A value between 0 and 2 that controls the randomness of the output. Higher values result in more creative and less predictable responses, while lower values make the output more deterministic. Default is 0.7.
+  * `top_k`(optional, int): An integer that restricts the model to sampling from the k most likely tokens at each step of the generation process. Default is 20.
+  * `top_p`(optional, float): A float between 0 and 1 that controls nucleus sampling. The model considers only the most probable tokens whose cumulative probability exceeds p. Default is 0.4.
+  * `stream`(optional, bool): A boolean flag that determines the response format. If true, the server will send back a stream of token-by-token events as they are generated. If false, it will send the full completion in a single response after it's finished. Default is false.
+
+```json JSON icon="js" theme={null}
+{
+  "input": {
+    "prompt": "The capital of the United States is",
+    "model": "Qwen/Qwen3-8B",
+    "max_tokens": 256,
+    "temperature": 0.7,
+    "top_k": 20,
+    "top_p": 0.4,
+    "stream": false
+  }
+}
+```
+
+Depending on the model being used, other parameters like 'temperature' or 'top\_p' may be supported. Passing in these values in `parameters` will forward the values to the model, but they are *not* required. All parameters can be found in the `CompletionConfig` class in client.py.
+
+### Outputs
+
+* `id`(string): A unique identifier for the completion request.
+* `object`(string): The type of object returned. For completions, this is always `text_completion`.
+* `created`(int): The Unix timestamp (in seconds) of when the completion was created.
+* `model`(string): The name of the model that generated the response.
+* `choices`:
+  * `index`(int): The index of the choice in the list (e.g., 0 for the first choice).
+  * `text`(string): The generated text for this completion choice.
+  * `logprobs`(object): This field is null unless you requested log probabilities. If requested, it contains the log probabilities of the generated tokens.
+  * `finish_reason`(string): The reason the model stopped generating text. Common values include length (reached max\_tokens), stop (encountered a stop sequence), or tool\_calls.
+  * `stop_reason`(string): Provides a more specific reason for why the model stopped, often related to internal model logic. It can be null if not applicable.
+  * `prompt_logprobs`(object): Similar to logprobs, but for the tokens in the initial prompt. It is null unless specifically requested.
+* `usage`:
+  * `prompt_tokens`(int): The number of tokens in the input prompt.
+  * `total_tokens`(int): The total number of tokens used in the request (prompt + completion).
+  * `completion_tokens`(int): The number of tokens in the generated completion.
+  * `prompt_tokens_details`(object): Provides a more detailed breakdown of prompt tokens. It is null unless requested.
+* `kv_transfer_params`(object): An extension field (outside the official OpenAI spec) that carries all the metadata you need to reuse or move around the model’s key/value (KV) cache instead of recomputing it on every call.
+
+```json JSON icon="js" theme={null}
+{
+  "id": "cmpl-7bd54bc0b3f4d48abf3fe4fa3c11f8b",
+  "object": "text_completion",
+  "created": 1754334436,
+  "model": "Qwen/Qwen3-8B",
+  "choices": [
+    {
+      "index": 0,
+      "text": " Washington D.C...",
+      "logprobs": null,
+      "finish_reason": "length",
+      "stop_reason": null,
+      "prompt_logprobs": null
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 6,
+    "total_tokens": 262,
+    "completion_tokens": 256,
+    "prompt_tokens_details": null
+  },
+  "kv_transfer_params": null
+}
+
+```
+
+### Streaming
+
+To use streaming, set the `stream` flag to `true` in the request payload.
+
+```python  theme={null}
+import asyncio
+from vastai import Serverless
+
+MAX_TOKENS = 1024
+
+async def main():
+    async with Serverless() as client:
+        endpoint = await client.get_endpoint(name="my-vllm-endpoint")
+
+        system_prompt = (
+            "You are Qwen, a helpful AI assistant.\n"
+            "You are to only speak in English.\n"
+            "Please answer the users response.\n"
+            "When you are done, use the <stop> token.\n"
+        )
+
+
+        user_prompt = """
+        What is the 118th element in the periodic table?
+        """
+
+        payload = {
+            "input" : {
+                "model": "Qwen/Qwen3-8B",
+                "prompt" : f"{system_prompt}\n{user_prompt}\n",
+                "max_tokens" : MAX_TOKENS,
+                "temperature" : 0.8,
+                "stop" : ["<stop>"],
+                "stream" : True,
+            }
+        }
+
+        response = await endpoint.request("/v1/completions", payload, cost=MAX_TOKENS, stream=True)
+        stream = response["response"]
+        async for event in stream:
+            print(event["choices"][0]["text"], end="", flush=True)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## **/v1**/chat/completions/&#x20;
+
+This endpoint generates a model response for a given conversational history. Unlike the /v1/completions/ endpoint, which is designed to continue a single text prompt, the chat endpoint excels at multi-turn dialogues. By providing a sequence of messages, each with a designated role (system, user, or assistant), you can simulate a conversation, and the model will generate the next appropriate message from the assistant.
+
+<Danger>
+  Not all LLMs will work with this endpoint. The model must be fine-tuned to understand messages and tools. The default model used in the Vast template will work.&#x20;
+</Danger>
+
+### Inputs
+
+`payload`:
+
+* `input`:
+  * `model`(string): The specific identifier of the model to be used for generating the text completion.
+  * `messages`(array): A list of message objects that form the conversation history.
+    * `role`(string): The role of the message author. Can be system, user, or assistant.
+    * `content`(string): The content of the message.
+  * `max_tokens`(optional, int): The maximum number of tokens the model will generate for the response to the input. Default is 256.
+  * `temperature`(optional, float): A value between 0 and 2 that controls the randomness of the output. Higher values result in more creative and less predictable responses, while lower values make the output more deterministic. Default is 0.7.
+  * `top_k`(optional, int): An integer that restricts the model to sampling from the k most likely tokens at each step of the generation process. Default is 20.
+  * `top_p`(optional, float): A float between 0 and 1 that controls nucleus sampling. The model considers only the most probable tokens whose cumulative probability exceeds p. Default is 0.4.
+  * `stream`(optional, bool): A boolean flag that determines the response format. If true, the server will send back a stream of token-by-token events as they are generated. If false, it will send the full completion in a single response after it's finished. Default is false.
+  * `tools`(optional, List\[Dict\[str, Any]]): A list of function definitions that the model can call to perform external actions. When a relevant tool is detected in the user's prompt, the model can generate a JSON object with the function name and arguments to call. Your code can then execute this function and return the output to the model to continue the conversation.
+  * `tool_choice`(optional, string): This parameter controls how the model uses the functions provided in the tools list. It can be set to "none" to prevent the model from using any tools, "auto" to let the model decide when to call a function, or you can force the model to call a specific function by providing an object like \{"type": "function", "function": \{"name": "my\_function\_name"}}.
+
+<Note>
+  The `max_tokens` parameter, rather than the `messages` size, impacts performance. For example, if an instance is benchmarked to process 100 tokens per second, a request with `max_tokens = 200` will take approximately 2 seconds to complete.
+</Note>
+
+```json JSON icon="js" theme={null}
+{
+  "auth_data": {
+    "signature": "a_base64_encoded_signature_string_from_route_endpoint",
+    "cost": 2096,
+    "endpoint": "Your-OpenAI-Endpoint-Name",
+    "reqnum": 1234567893,
+    "url": "http://worker-ip-address:port"
+  },
+  "payload": {
+    "input": {
+      "model": "Qwen/Qwen3-8B",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What's the weather like in LA today?"
+        }
+      ],
+      "max_tokens": 256,
+      "temperature": 0.7,
+      "top_k": 40,
+      "top_p": 0.9,
+      "stream": false,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_current_weather",
+            "description": "Get the current weather in a given location",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "location": {
+                  "type": "string",
+                  "description": "The city and state, e.g. Los Angeles, CA"
+                },
+                "unit": {
+                  "type": "string",
+                  "enum": ["celsius", "fahrenheit"],
+                  "description": "The unit of temperature"
+                }
+              },
+              "required": ["location"]
+            }
+          }
+        }
+      ],
+      "tool_choice": {
+        "type": "function",
+        "function": {
+          "name": "get_current_weather"
+        }
+      }
+    }
+  }
+}
+```
+
+### Outputs
+
+* `id`(string): A unique identifier for the completion request.
+* `object`(string): The type of object returned. For chat completions, this is always `chat.completion`.
+* `created`(int): The Unix timestamp (in seconds) of when the completion was created.
+* `model`(string): The name of the model that generated the response.
+* `choices`:
+  * `index`(int): The index of the choice in the list (e.g., 0 for the first choice).
+  * `messages`(string): A message object generated by the model.
+    * `role`(string): The role of the message author. Can be system, user, or assistant.
+    * `content`(string): The content of the message.
+    * `tool_calls`(array): Contains the function call(s) the model wants to execute. The arguments field is a JSON string containing the parameters extracted from the user's prompt.
+  * `finish_reason`(string): The reason the model stopped generating text. Common values include length (reached max\_tokens), stop (encountered a stop sequence), or tool\_calls.
+* `usage`:
+  * `prompt_tokens`(int): The number of tokens in the input prompt.
+  * `total_tokens`(int): The total number of tokens used in the request (prompt + completion).
+  * `completion_tokens`(int): The number of tokens in the generated completion.
+
+```json JSON icon="js" theme={null}
+{
+  "id": "chatcmpl-a1b2c3d4-e5f6-7890-1234-5g6h7j8k9l0m",
+  "object": "chat.completion",
+  "created": 1754336000,
+  "model": "Qwen/Qwen3-8B",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_Abc123Xyz",
+            "type": "function",
+            "function": {
+              "name": "get_current_weather",
+              "arguments": "{\"location\": \"Los Angeles, CA\"}"
+            }
+          }
+        ]
+      },
+      "finish_reason": "tool_calls"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 85,
+    "completion_tokens": 18,
+    "total_tokens": 103
+  }
+}
+```
+
+### Streaming
+
+To use streaming, set the `stream` flag to `true` in the request payload
+
+```python  theme={null}
+import asyncio
+from vastai import Serverless
+
+MAX_TOKENS = 1024
+
+async def main():
+    async with Serverless() as client:
+        endpoint = await client.get_endpoint(name="my-vllm-endpoint")
+
+        system_prompt = (
+            "You are Qwen.\n"
+            "You are to only speak in English.\n"
+        )
+
+        user_prompt = "What is the integral of 2x^2 from 0 to 5?"
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        payload = {
+            "input": {
+                "model": "Qwen/Qwen3-8B",
+                "messages": messages,
+                "stream": True,
+                "max_tokens": MAX_TOKENS,
+                "temperature": 0.7,
+            }
+        }
+
+        response = await endpoint.request("/v1/chat/completions", payload, cost=MAX_TOKENS, stream=True)
+        stream = response["response"]
+
+        printed_reasoning = False
+        printed_answer = False
+
+        async for chunk in stream:
+            delta = chunk["choices"][0].get("delta", {})
+
+            rc = delta.get("reasoning_content", None)
+            if rc:
+                if not printed_reasoning:
+                    printed_reasoning = True
+                    print("Reasoning:\n", end="", flush=True)
+                print(rc, end="", flush=True)
+
+            content = delta.get("content", None)
+            if content:
+                if not printed_answer:
+                    printed_answer = True
+                    if printed_reasoning:
+                        print("\n\nAnswer:\n", end="", flush=True)
+                    else:
+                        print("Answer:\n", end="", flush=True)
+                print(content, end="", flush=True)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+# Comfy UI
+
+> Learn how to use Comfy UI with Vast.ai Serverless for image generation workflows.
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+__html: JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Comfy UI with Vast.ai Serverless",
+  "description": "Complete guide to using ComfyUI with Vast.ai Serverless for image generation workflows, covering template setup, S3 storage configuration, benchmarking, workflow submission via /generate/sync endpoint, and testing.",
+  "author": {
+    "@type": "Organization",
+    "name": "Vast.ai"
+  },
+  "articleSection": "Serverless Documentation",
+  "keywords": ["ComfyUI", "image generation", "stable diffusion", "serverless", "API", "vast.ai", "workflow", "benchmarking", "S3 storage", "PyWorker", "generate endpoint"]
+})
+}}
+/>
+
+The [ComfyUI Serverless template](https://cloud.vast.ai/?ref_id=62897\&creator_id=62897\&name=ComfyUI%20\(Serverless\)) allows you to send requests to ComfyUI and have generated assets automatically uploaded to S3-compatible storage. The template returns pre-signed URLs in response to requests, along with detailed process updates emitted by ComfyUI during generation.
+
+# Template Components
+
+The ComfyUI template includes:
+
+**In the Docker Image:**
+
+* ComfyUI
+* ComfyUI API Wrapper
+* Stable Diffusion 1.5 (for benchmarking)
+
+**Downloaded on first boot:**
+
+* PyWorker (comfyui-json worker)
+* Provisioning Script for custom configuration
+  * Adds cron job to remove older output files (older than 24 hours) if available disk space is less than 512MB
+
+<Note>
+  Before using this template, familiarize yourself with the [Serverless Documentation](/documentation/serverless/overview) and [Getting Started With Serverless](/documentation/serverless/getting-started-with-serverless) guide.
+</Note>
+
+# Environment Variables
+
+## Required for S3 Storage
+
+The API wrapper manages asset uploads to S3-compatible storage. Configure these variables in your [Account Settings](https://cloud.vast.ai/settings/):
+
+* `S3_ACCESS_KEY_ID`(string): Access key ID for S3-compatible storage
+* `S3_SECRET_ACCESS_KEY`(string): Secret access key for S3-compatible storage
+* `S3_BUCKET_NAME`(string): Bucket name for S3-compatible storage
+* `S3_ENDPOINT_URL`(string): Endpoint URL for S3-compatible storage
+* `S3_REGION`(string): Optional region for S3-compatible storage
+
+<Note>
+  These S3 values can be overridden on a per-request basis in the request payload.
+</Note>
+
+## Optional Configuration
+
+* `WEBHOOK_URL`(string): Optional webhook to call after generation completion or failure
+* `PYWORKER_REPO`(string): Custom PyWorker git repository URL (default: [https://github.com/vast-ai/pyworker](https://github.com/vast-ai/pyworker))
+* `PYWORKER_REF`(string): Git reference to checkout from PyWorker repository
+* `BENCHMARK_TEST_WIDTH`(int): Image width in pixels for default benchmark only (default: 512)
+* `BENCHMARK_TEST_HEIGHT`(int): Image height in pixels for default benchmark only (default: 512)
+* `BENCHMARK_TEST_STEPS`(int): Number of denoising steps for default benchmark only (default: 20)
+
+<Warning>
+  Store sensitive information like API keys in the 'Environment Variables' section of your [Account Settings](https://cloud.vast.ai/settings/). These will be available in all instances you create.
+</Warning>
+
+# Benchmarking
+
+When a worker initializes, it runs a benchmark to validate GPU performance and calculate a performance score. This score determines how requests are distributed across workers.
+
+## Custom Benchmark Workflows
+
+You can provide a custom ComfyUI workflow for benchmarking by creating `workers/comfyui-json/misc/benchmark.json`. Use the placeholder `__RANDOM_INT__` in place of static seed values to ensure varied generations.
+
+<Note>
+  The `__RANDOM_INT__` placeholder can also be used in any workflow you send to the worker. It will be replaced with a random integer for each generation, allowing for varied outputs without manually specifying different seeds.
+</Note>
+
+## Default Benchmark
+
+If no custom benchmark is provided, the template uses Stable Diffusion v1.5 with ComfyUI's default text-to-image workflow. Configure the benchmark complexity using the environment variables listed above.
+
+**How worker scores work:**
+
+* Each benchmark has a baseline complexity score of `100` (representing 100% of the work)
+* A worker completing the benchmark in 100 seconds receives a score of `1.0` (processes 1% of work per second)
+* A worker completing in 50 seconds receives a score of `2.0` (twice as fast)
+* Faster workers (higher scores) receive proportionally more requests
+
+<Note>
+  Configure your benchmark to match your actual workload complexity. If your typical workflow is more complex than the default SD1.5 benchmark, increase `BENCHMARK_TEST_STEPS` proportionally.
+</Note>
+
+# Endpoints
+
+The ComfyUI template provides endpoints for executing workflows and generating images. After obtaining a worker address from the `/route/` endpoint (see [route documentation](/documentation/serverless/route)), you can send requests to the following endpoints.
+
+## /generate/sync
+
+The primary endpoint for submitting ComfyUI workflows. This endpoint accepts complete, user-defined ComfyUI workflows in JSON format and processes them synchronously.
+
+### Request Structure
+
+### Input
+
+`payload`:
+
+* `input`:
+  * `request_id`(string): Optional unique identifier for tracking the request
+  * `workflow_json`(object): Complete ComfyUI workflow graph in JSON format
+  * `s3`(object): Optional S3 configuration override
+    * `access_key_id`(string)
+    * `secret_access_key`(string)
+    * `endpoint_url`(string)
+    * `bucket_name`(string)
+    * `region`(string)
+  * `webhook`(object): Optional webhook configuration
+    * `url`(string): Webhook URL to call after generation
+    * `extra_params`(object): Additional parameters to include in webhook payload
+
+<Note>
+  If the API Wrapper detects that you have used a URL as an input image in your workflow, it will automatically download the image and modify the workflow to use the local path.
+</Note>
+
+**Example Request:**
+
+<CodeGroup>
+  ```python vastai-sdk icon=python theme={null}
+  from vastai import Serverless
+  import asyncio
+
+  ENDPOINT_NAME="comfyui-json"
+
+  async def main():
+      async with Serverless() as client:
+          endpoint = await client.get_endpoint(name=ENDPOINT_NAME)
+
+          # ComfyUI API compatible json workflow
+          workflow = {
+            "3": {
+              "inputs": {
+                "seed": "__RANDOM_INT__",
+                "steps": 20,
+                "cfg": 8,
+                "sampler_name": "euler",
+                "scheduler": "normal",
+                "denoise": 1,
+                "model": ["4", 0],
+                "positive": ["6", 0],
+                "negative": ["7", 0],
+                "latent_image": ["5", 0]
+              },
+              "class_type": "KSampler",
+              "_meta": {
+                "title": "KSampler"
+              }
+            },
+            "4": {
+              "inputs": {
+                "ckpt_name": "v1-5-pruned-emaonly-fp16.safetensors"
+              },
+              "class_type": "CheckpointLoaderSimple",
+              "_meta": {
+                "title": "Load Checkpoint"
+              }
+            },
+            "5": {
+              "inputs": {
+                "width": 512,
+                "height": 512,
+                "batch_size": 1
+              },
+              "class_type": "EmptyLatentImage",
+              "_meta": {
+                "title": "Empty Latent Image"
+              }
+            },
+            "6": {
+              "inputs": {
+                "text": "beautiful scenery nature glass bottle landscape, purple galaxy bottle",
+                "clip": ["4", 1]
+              },
+              "class_type": "CLIPTextEncode",
+              "_meta": {
+                "title": "CLIP Text Encode (Prompt)"
+              }
+            },
+            "7": {
+              "inputs": {
+                "text": "text, watermark",
+                "clip": ["4", 1]
+              },
+              "class_type": "CLIPTextEncode",
+              "_meta": {
+                "title": "CLIP Text Encode (Prompt)"
+              }
+            },
+            "8": {
+              "inputs": {
+                "samples": ["3", 0],
+                "vae": ["4", 2]
+              },
+              "class_type": "VAEDecode",
+              "_meta": {
+                "title": "VAE Decode"
+              }
+            },
+            "9": {
+              "inputs": {
+                "filename_prefix": "ComfyUI",
+                "images": ["8", 0]
+              },
+              "class_type": "SaveImage",
+              "_meta": {
+                "title": "Save Image"
+              }
+            }
+          }
+          
+          payload = {
+            "input": {
+              "request_id": "",
+              "workflow_json": workflow,
+              "s3": {
+                "access_key_id": "",
+                "secret_access_key": "",
+                "endpoint_url": "",
+                "bucket_name": "",
+                "region": ""
+              },
+              "webhook": {
+                "url": "",
+                "extra_params": {
+                  "user_id": "12345",
+                  "project_id": "abc-def"
+                }
+              }
+            }
+          }
+
+          response = await endpoint.request("/generate/sync", payload)
+
+          # Response contains status, output, and any errors
+          print(response["response"])
+
+  if __name__ == "__main__":
+      asyncio.run(main())
+  ```
+</CodeGroup>
+
+### Outputs
+
+* `id`(string): Unique identifier for the request
+* `status`(string): Request status - `completed`, `failed`, `processing`, `generating`, or `queued`
+* `message`(string): Human-readable status message
+* `comfyui_response`(object): Detailed response from ComfyUI including:
+  * `prompt`: The workflow that was executed
+  * `outputs`: Generated outputs organized by node ID
+  * `status`: Execution status with completion messages and timestamps
+  * `meta`: Metadata about the execution
+  * `execution_details`: Progress updates and timing information
+* `output`(array): Array of output objects, each containing:
+  * `filename`(string): Name of the generated file
+  * `local_path`(string): Path to file on worker
+  * `url`(string): Pre-signed URL for downloading the generated asset (if S3 is configured)
+  * `type`(string): Output type (e.g., "output")
+  * `subfolder`(string): Subfolder within output directory
+  * `node_id`(string): ComfyUI node that produced this output
+  * `output_type`(string): Type of output (e.g., "images")
+* `timings`(object): Timing information for the request
+
+<Warning>
+  Ensure that any models and nodes referenced in your workflow are already installed before sending a request. Use the Provisioning Script or build a custom Docker image to pre-install required models and nodes.
+</Warning>
+
+# Testing Before Deployment
+
+Although this template is designed for serverless deployment, you can test it as an interactive instance first.
+
+To access ComfyUI and the API wrapper:
+
+1. Start an interactive instance with this template
+2. Connect via SSH with port forwarding:
+   ```bash  theme={null}
+   ssh -L 18188:localhost:18188 -L 18288:localhost:18288 root@instance-address -p port
+   ```
+3. Access ComfyUI at [http://localhost:18188](http://localhost:18188)
+4. Access the API Wrapper documentation at [http://localhost:18288/docs](http://localhost:18288/docs)
+
+The benchmarking process will be visible in the instance logs, but applications won't be available over the public interface without port forwarding.
+

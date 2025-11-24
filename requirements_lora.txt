@@ -1,0 +1,12 @@
+# kohya-ss/sd-scriptsの実行に必要なライブラリ
+# torch, torchvisionはベースイメージに含まれています
+bitsandbytes==0.43.1
+safetensors>=0.4.0
+prodigyopt
+lycoris-lora
+einops
+toml
+tqdm
+lion-pytorch
+dadaptation
+pycryptodome
